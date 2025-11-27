@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PROFECO - Reportar Inconsistencia</title>
+    <link rel="stylesheet" href="styles-profeco.css">
+</head>
+<body>
+    <div class="header">
+        <div class="header-left">
+            <button class="back-btn" onclick="window.location.href='catalogo.html'">←</button>
+            <h1>Reportar Inconsistencia</h1>
+        </div>
+        <div class="user-info">
+            <span class="user-name" id="user-name"></span>
+            <button class="logout-btn" onclick="logout()">Cerrar sesion</button>
+        </div>
+    </div>
+
+    <div class="content">
+        <div class="card">
+            <h2 class="card-title">Nuevo Reporte de Inconsistencia</h2>
+            
+            <div id="alertContainer"></div>
+
+            <form id="reporteForm">
+                <div class="form-group">
+                    <label>Supermercado *</label>
+                    <input type="text" id="supermercado" required placeholder="Ej: Walmart, Soriana, Chedraui">
+                </div>
+
+                <div class="form-group">
+                    <label>Producto *</label>
+                    <input type="text" id="producto" required placeholder="Ej: Leche entera 1L">
+                </div>
+
+                <div class="form-group">
+                    <label>Precio Publicado *</label>
+                    <input type="number" step="0.01" id="precioPublicado" required placeholder="$0.00">
+                </div>
+
+                <div class="form-group">
+                    <label>Precio Real en Tienda *</label>
+                    <input type="number" step="0.01" id="precioReal" required placeholder="$0.00">
+                </div>
+
+                <div class="form-group">
+                    <label>Descripcion del Problema *</label>
+                    <textarea id="descripcion" required placeholder="Describe la inconsistencia que encontraste..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Diferencia de Precio</label>
+                    <input type="text" id="diferencia" readonly style="background: #f9f9f9;">
+                </div>
+
+                <button type="submit" class="btn btn-primary" id="btnEnviar">
+                    Enviar Reporte
+                </button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2 class="card-title">Mis Reportes Anteriores</h2>
+            
+            <div id="loadingReportes" class="loading">Cargando reportes...</div>
+            
+            <div class="table-wrapper" id="tablaReportes" style="display: none;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Supermercado</th>
+                            <th>Producto</th>
+                            <th>Precio Publicado</th>
+                            <th>Precio Real</th>
+                            <th>Diferencia</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reportesTableBody"></tbody>
+                </table>
+            </div>
+
+            <div id="noReportes" style="display: none; text-align: center; padding: 40px; color: #999;">
+                No tienes reportes anteriores
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_GATEWAY = 'http://localhost:3000/api';
+        const API_REPORTES = 'http://localhost:4003/api';
+        let token = localStorage.getItem('token');
+        let usuario = JSON.parse(localStorage.getItem('usuario') || 'null');
+
+        if (!token || !usuario) {
+            window.location.href = 'index.html';
+        }
+
+        document.getElementById('user-name').textContent = usuario.nombre;
+
+        const precioPublicadoInput = document.getElementById('precioPublicado');
+        const precioRealInput = document.getElementById('precioReal');
+        const diferenciaInput = document.getElementById('diferencia');
+
+        function calcularDiferencia() {
+            const publicado = parseFloat(precioPublicadoInput.value) || 0;
+            const real = parseFloat(precioRealInput.value) || 0;
+            
+            if (publicado > 0 && real > 0) {
+                const diferencia = real - publicado;
+                const porcentaje = ((diferencia / publicado) * 100).toFixed(1);
+                
+                if (diferencia > 0) {
+                    diferenciaInput.value = `+$${diferencia.toFixed(2)} (+${porcentaje}%)`;
+                    diferenciaInput.style.color = '#ef4444';
+                } else if (diferencia < 0) {
+                    diferenciaInput.value = `-$${Math.abs(diferencia).toFixed(2)} (${porcentaje}%)`;
+                    diferenciaInput.style.color = '#22c55e';
+                } else {
+                    diferenciaInput.value = 'Sin diferencia';
+                    diferenciaInput.style.color = '#666';
+                }
+            } else {
+                diferenciaInput.value = '';
+            }
+        }
+
+        precioPublicadoInput.addEventListener('input', calcularDiferencia);
+        precioRealInput.addEventListener('input', calcularDiferencia);
+
+        document.getElementById('reporteForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const btnEnviar = document.getElementById('btnEnviar');
+            const alertContainer = document.getElementById('alertContainer');
+            
+            btnEnviar.disabled = true;
+            btnEnviar.textContent = 'Enviando...';
+            alertContainer.innerHTML = '';
+            
+            try {
+                const datos = {
+                    usuarioId: usuario.id,
+                    supermercadoId: 1,
+                    supermercado: document.getElementById('supermercado').value,
+                    productoId: 1,
+                    producto: document.getElementById('producto').value,
+                    precioPublicado: parseFloat(document.getElementById('precioPublicado').value),
+                    precioReal: parseFloat(document.getElementById('precioReal').value),
+                    descripcion: document.getElementById('descripcion').value
+                };
+                
+                const response = await fetch(`${API_REPORTES}/reportes`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(datos)
+                });
+                
+                const resultado = await response.json();
+                
+                if (resultado.success) {
+                    alertContainer.innerHTML = `
+                        <div class="alert alert-success">
+                            Reporte enviado exitosamente. Gracias por ayudarnos a proteger a los consumidores.
+                        </div>
+                    `;
+                    
+                    document.getElementById('reporteForm').reset();
+                    diferenciaInput.value = '';
+                    
+                    cargarReportes();
+                    
+                    setTimeout(() => {
+                        alertContainer.innerHTML = '';
+                    }, 5000);
+                } else {
+                    throw new Error(resultado.mensaje || 'Error al enviar reporte');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alertContainer.innerHTML = `
+                    <div class="alert alert-error">
+                        Error al enviar el reporte: ${error.message}
+                    </div>
+                `;
+            } finally {
+                btnEnviar.disabled = false;
+                btnEnviar.textContent = 'Enviar Reporte';
+            }
+        });
+
+        async function cargarReportes() {
+            const loadingReportes = document.getElementById('loadingReportes');
+            const tablaReportes = document.getElementById('tablaReportes');
+            const noReportes = document.getElementById('noReportes');
+            const tbody = document.getElementById('reportesTableBody');
+            
+            try {
+                loadingReportes.style.display = 'block';
+                tablaReportes.style.display = 'none';
+                noReportes.style.display = 'none';
+                
+                const response = await fetch(`${API_REPORTES}/reportes`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                const resultado = await response.json();
+                
+                if (resultado.success && resultado.data) {
+                    const misReportes = resultado.data.filter(r => r.usuarioId === usuario.id);
+                    
+                    if (misReportes.length > 0) {
+                        tbody.innerHTML = '';
+                        
+                        misReportes.forEach(reporte => {
+                            const diferencia = parseFloat(reporte.precioReal) - parseFloat(reporte.precioPublicado);
+                            const estadoBadge = getBadgeEstado(reporte.estado);
+                            
+                            const tr = document.createElement('tr');
+                            tr.innerHTML = `
+                                <td>${formatearFecha(reporte.createdAt)}</td>
+                                <td>${reporte.supermercado}</td>
+                                <td>${reporte.producto}</td>
+                                <td>$${parseFloat(reporte.precioPublicado).toFixed(2)}</td>
+                                <td>$${parseFloat(reporte.precioReal).toFixed(2)}</td>
+                                <td style="color: ${diferencia > 0 ? '#ef4444' : '#22c55e'}">
+                                    ${diferencia > 0 ? '+' : ''}$${diferencia.toFixed(2)}
+                                </td>
+                                <td>${estadoBadge}</td>
+                            `;
+                            tbody.appendChild(tr);
+                        });
+                        
+                        tablaReportes.style.display = 'block';
+                    } else {
+                        noReportes.style.display = 'block';
+                    }
+                }
+            } catch (error) {
+                console.error('Error cargando reportes:', error);
+                noReportes.style.display = 'block';
+            } finally {
+                loadingReportes.style.display = 'none';
+            }
+        }
+
+        function getBadgeEstado(estado) {
+            const badges = {
+                'pendiente': '<span class="badge badge-pending">Pendiente</span>',
+                'revisado': '<span class="badge badge-reviewed">Revisado</span>',
+                'resuelto': '<span class="badge badge-resolved">Resuelto</span>'
+            };
+            return badges[estado] || badges['pendiente'];
+        }
+
+        function formatearFecha(fecha) {
+            const date = new Date(fecha);
+            return date.toLocaleDateString('es-MX', { 
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = 'index.html';
+        }
+
+        cargarReportes();
+    </script>
+</body>
+</html>

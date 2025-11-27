@@ -1,7 +1,7 @@
-// server.js - API Gateway para ProFeCo
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const amqp = require('amqplib');
+const cors = require('cors');
 const { v4: uuidv4 } = require('uuid');
 const { authenticateToken, authorize, JWT_SECRET } = require('./middleware/auth');
 const RABBITMQ_CONFIG = require('./config/rabbitmq');
@@ -9,16 +9,16 @@ const RABBITMQ_CONFIG = require('./config/rabbitmq');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+app.use(cors());
 app.use(express.json());
 
-// Base de datos simulada de usuarios
 const usuarios = [
   {
     id: 1,
     email: 'consumidor@test.com',
     password: 'password123',
     tipo: 'consumidor',
-    nombre: 'Juan Pérez'
+    nombre: 'Juan Perez'
   },
   {
     id: 2,
@@ -36,7 +36,6 @@ const usuarios = [
   }
 ];
 
-// Conexión a RabbitMQ
 let channel = null;
 let connection = null;
 
@@ -44,16 +43,15 @@ async function connectRabbitMQ() {
   try {
     connection = await amqp.connect(RABBITMQ_CONFIG.url);
     channel = await connection.createChannel();
-    console.log('✅ API Gateway conectado a RabbitMQ');
+    console.log('API Gateway conectado a RabbitMQ');
     return true;
   } catch (error) {
-    console.error('❌ Error conectando a RabbitMQ:', error.message);
+    console.error('Error conectando a RabbitMQ:', error.message);
     setTimeout(connectRabbitMQ, 5000);
     return false;
   }
 }
 
-// Enviar mensaje RPC a microservicio
 async function enviarMensajeRPC(cola, mensaje) {
   return new Promise(async (resolve, reject) => {
     try {
@@ -90,11 +88,6 @@ async function enviarMensajeRPC(cola, mensaje) {
   });
 }
 
-// ==========================================
-// RUTAS DE AUTENTICACIÓN
-// ==========================================
-
-// Login
 app.post('/api/auth/login', (req, res) => {
   const { email, password } = req.body;
 
@@ -110,7 +103,7 @@ app.post('/api/auth/login', (req, res) => {
   if (!usuario) {
     return res.status(401).json({
       success: false,
-      mensaje: 'Credenciales inválidas'
+      mensaje: 'Credenciales invalidas'
     });
   }
 
@@ -140,20 +133,14 @@ app.post('/api/auth/login', (req, res) => {
   });
 });
 
-// Verificar token
 app.get('/api/auth/verify', authenticateToken, (req, res) => {
   res.json({
     success: true,
-    mensaje: 'Token válido',
+    mensaje: 'Token valido',
     data: req.user
   });
 });
 
-// ==========================================
-// RUTAS DE OFERTAS (vía RabbitMQ)
-// ==========================================
-
-// Obtener ofertas - Todos los usuarios autenticados
 app.get('/api/ofertas', authenticateToken, async (req, res) => {
   try {
     const respuesta = await enviarMensajeRPC(RABBITMQ_CONFIG.queues.ofertas, {
@@ -170,13 +157,12 @@ app.get('/api/ofertas', authenticateToken, async (req, res) => {
     console.error('Error:', error);
     res.status(500).json({
       success: false,
-      mensaje: 'Error comunicándose con el microservicio',
+      mensaje: 'Error comunicandose con el microservicio',
       error: error.message
     });
   }
 });
 
-// Crear oferta - Solo supermercados y ProFeCo
 app.post('/api/ofertas', authenticateToken, authorize('supermercado', 'profeco'), async (req, res) => {
   try {
     const respuesta = await enviarMensajeRPC(RABBITMQ_CONFIG.queues.ofertas, {
@@ -193,13 +179,12 @@ app.post('/api/ofertas', authenticateToken, authorize('supermercado', 'profeco')
     console.error('Error:', error);
     res.status(500).json({
       success: false,
-      mensaje: 'Error comunicándose con el microservicio',
+      mensaje: 'Error comunicandose con el microservicio',
       error: error.message
     });
   }
 });
 
-// Actualizar oferta - Solo supermercados y ProFeCo
 app.put('/api/ofertas/:id', authenticateToken, authorize('supermercado', 'profeco'), async (req, res) => {
   try {
     const respuesta = await enviarMensajeRPC(RABBITMQ_CONFIG.queues.ofertas, {
@@ -214,15 +199,11 @@ app.put('/api/ofertas/:id', authenticateToken, authorize('supermercado', 'profec
     console.error('Error:', error);
     res.status(500).json({
       success: false,
-      mensaje: 'Error comunicándose con el microservicio',
+      mensaje: 'Error comunicandose con el microservicio',
       error: error.message
     });
   }
 });
-
-// ==========================================
-// RUTAS DE INFORMACIÓN
-// ==========================================
 
 app.get('/health', (req, res) => {
   res.json({
@@ -239,11 +220,11 @@ app.get('/', (req, res) => {
     version: '1.0',
     endpoints: {
       autenticacion: {
-        'POST /api/auth/login': 'Iniciar sesión',
+        'POST /api/auth/login': 'Iniciar sesion',
         'GET /api/auth/verify': 'Verificar token'
       },
       ofertas: {
-        'GET /api/ofertas': 'Obtener ofertas (requiere autenticación)',
+        'GET /api/ofertas': 'Obtener ofertas (requiere autenticacion)',
         'POST /api/ofertas': 'Crear oferta (supermercado/profeco)',
         'PUT /api/ofertas/:id': 'Actualizar oferta (supermercado/profeco)'
       }
@@ -256,25 +237,24 @@ app.get('/', (req, res) => {
   });
 });
 
-// Iniciar servidor
 async function iniciar() {
-  console.log('🚀 Iniciando API Gateway...\n');
+  console.log('Iniciando API Gateway...');
   
   await connectRabbitMQ();
   
   app.listen(PORT, () => {
-    console.log(`✅ API Gateway ejecutándose en http://localhost:${PORT}`);
-    console.log('📋 Endpoints principales:');
+    console.log(`API Gateway ejecutandose en http://localhost:${PORT}`);
+    console.log('Endpoints principales:');
     console.log('   POST   /api/auth/login');
     console.log('   GET    /api/auth/verify');
     console.log('   GET    /api/ofertas');
     console.log('   POST   /api/ofertas');
-    console.log('   PUT    /api/ofertas/:id\n');
+    console.log('   PUT    /api/ofertas/:id');
   });
 }
 
 process.on('SIGINT', async () => {
-  console.log('\n🛑 Cerrando conexiones...');
+  console.log('Cerrando conexiones...');
   if (channel) await channel.close();
   if (connection) await connection.close();
   process.exit(0);

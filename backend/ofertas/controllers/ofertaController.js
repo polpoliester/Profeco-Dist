@@ -1,4 +1,4 @@
-// Lógica de negocio para las operaciones de Ofertas
+// Ofertas negocio
 const Oferta = require('./models/Oferta');
 const { 
   calcularDescuento, 

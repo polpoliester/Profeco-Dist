@@ -7,7 +7,6 @@ const reporteRoutes = require("./routes/reporteRoutes");
 const app = express();
 app.use(express.json());
 
-// Rutas
 app.use("/api/reportes", reporteRoutes);
 
 async function iniciar() {
@@ -17,10 +16,10 @@ async function iniciar() {
     await conectarRabbit();
     await consumir();
   } catch {
-    console.log("⚠️ Reporte inició sin RabbitMQ (modo local)");
+    console.log("Reporte inicio sin RabbitMQ (modo local)");
   }
 
-  app.listen(4003, () => console.log("📊 Reporte en puerto 4003"));
+  app.listen(4003, () => console.log("Reporte en puerto 4003"));
 }
 
 iniciar();

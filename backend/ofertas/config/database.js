@@ -10,10 +10,10 @@ const sequelize = new Sequelize('profeco_db', 'root', 'root', {
 async function conectarDB() {
   try {
     await sequelize.authenticate();
-    console.log('✅ MySQL conectado');
+    console.log('MySQL conectado!');
     return true;
   } catch (error) {
-    console.error('❌ Error MySQL:', error.message);
+    console.error('Error MySQL:', error.message);
     return false;
   }
 }
@@ -21,10 +21,10 @@ async function conectarDB() {
 async function sincronizarModelos() {
   try {
     await sequelize.sync({ alter: true });
-    console.log('✅ Modelos sincronizados');
+    console.log('Modelos sincronizados');
     return true;
   } catch (error) {
-    console.error('❌ Error sincronizando:', error.message);
+    console.error('Error sincronizando:', error.message);
     return false;
   }
 }
@@ -32,7 +32,7 @@ async function sincronizarModelos() {
 async function cerrarConexion() {
   try {
     await sequelize.close();
-    console.log('✅ MySQL cerrado');
+    console.log('MySQL cerrado');
   } catch (error) {
     console.error('Error cerrando:', error.message);
   }

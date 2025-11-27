@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PROFECO - Catalogo</title>
+    <title>PROFECO - Catálogo</title>
     <style>
         * {
             margin: 0;
@@ -22,43 +22,21 @@
             padding: 16px;
             display: flex;
             align-items: center;
-            justify-content: space-between;
             box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
 
-        .header-left {
-            display: flex;
-            align-items: center;
+        .back-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            margin-right: 16px;
         }
 
         .header h1 {
             font-size: 20px;
             font-weight: 500;
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .user-name {
-            font-size: 14px;
-            opacity: 0.9;
-        }
-
-        .logout-btn {
-            background: rgba(255,255,255,0.2);
-            border: none;
-            color: white;
-            padding: 6px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-
-        .logout-btn:hover {
-            background: rgba(255,255,255,0.3);
         }
 
         .content {
@@ -241,58 +219,12 @@
             color: #999;
             font-size: 16px;
         }
-        .fab-button {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            width: 60px;
-            height: 60px;
-            background: #8B1538;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            font-size: 24px;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(139, 21, 56, 0.4);
-            z-index: 1000;
-            transition: all 0.3s;
-        }
-
-        .fab-button:hover {
-            transform: scale(1.1);
-            box-shadow: 0 6px 16px rgba(139, 21, 56, 0.5);
-        }
-
-        .fab-tooltip {
-            position: fixed;
-            bottom: 100px;
-            right: 40px;
-            background: #333;
-            color: white;
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 14px;
-            white-space: nowrap;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s;
-            z-index: 999;
-        }
-
-        .fab-button:hover + .fab-tooltip {
-            opacity: 1;
-        }
     </style>
 </head>
 <body>
     <div class="header">
-        <div class="header-left">
-            <h1>Catalogo de Ofertas</h1>
-        </div>
-        <div class="user-info">
-            <span class="user-name" id="user-name"></span>
-            <button class="logout-btn" onclick="logout()">Cerrar sesion</button>
-        </div>
+        <button class="back-btn" onclick="history.back()">←</button>
+        <h1>Catálogo de Ofertas</h1>
     </div>
 
     <div class="content">
@@ -317,18 +249,12 @@
     </div>
 
     <script>
-        const API_BASE_URL = 'http://localhost:3000/api';
-        let token = localStorage.getItem('token');
-        let usuario = JSON.parse(localStorage.getItem('usuario') || 'null');
+        // URL base de tu API - CAMBIA ESTO según tu configuración
+const API_BASE_URL = 'http://localhost:3001/api';        
         let todasLasOfertas = [];
         let supermercadosFiltro = new Set();
 
-        if (!token || !usuario) {
-            window.location.href = 'index.html';
-        }
-
-        document.getElementById('user-name').textContent = usuario.nombre;
-
+        // Cargar ofertas al iniciar
         document.addEventListener('DOMContentLoaded', cargarOfertas);
 
         async function cargarOfertas() {
@@ -340,18 +266,8 @@
                 loadingContainer.style.display = 'block';
                 errorContainer.innerHTML = '';
                 
-                const response = await fetch(`${API_BASE_URL}/ofertas?activa=true`, {
-                    headers: { 
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                if (response.status === 401 || response.status === 403) {
-                    localStorage.clear();
-                    window.location.href = 'index.html';
-                    return;
-                }
+                // Llamar a tu API para obtener ofertas activas
+                const response = await fetch(`${API_BASE_URL}/ofertas?activa=true`);
                 
                 if (!response.ok) {
                     throw new Error(`Error HTTP: ${response.status}`);
@@ -359,28 +275,21 @@
                 
                 const resultado = await response.json();
                 
-                console.log('Resultado:', resultado);
-                
                 if (!resultado.success) {
                     throw new Error(resultado.mensaje || 'Error al cargar ofertas');
                 }
                 
                 todasLasOfertas = resultado.data || [];
                 
-                if (todasLasOfertas.length === 0) {
-                    errorContainer.innerHTML = `
-                        <div class="error">
-                            No hay ofertas disponibles. Crea algunas ofertas primero.
-                        </div>
-                    `;
-                    return;
-                }
-                
+                // Extraer supermercados únicos para filtros
                 todasLasOfertas.forEach(oferta => {
                     supermercadosFiltro.add(oferta.supermercado);
                 });
                 
+                // Crear botones de filtro
                 crearFiltrosSupermercado();
+                
+                // Mostrar ofertas
                 mostrarOfertas(todasLasOfertas);
                 
             } catch (error) {
@@ -388,13 +297,6 @@
                 errorContainer.innerHTML = `
                     <div class="error">
                         Error al cargar las ofertas: ${error.message}
-                        <br><br>
-                        Verifica que:
-                        <ul style="margin-top: 10px; margin-left: 20px;">
-                            <li>El API Gateway este corriendo en puerto 3000</li>
-                            <li>El Microservicio de Ofertas este corriendo en puerto 3001</li>
-                            <li>RabbitMQ este corriendo</li>
-                        </ul>
                     </div>
                 `;
             } finally {
@@ -413,6 +315,7 @@
                 filterOptions.appendChild(btn);
             });
             
+            // Añadir event listeners a filtros
             const filterBtns = document.querySelectorAll('.filter-btn');
             filterBtns.forEach(btn => {
                 btn.addEventListener('click', function() {
@@ -473,7 +376,7 @@
                     </div>
                     <div class="product-store">${oferta.supermercado}</div>
                     <div class="vigencia">
-                        Valido del ${formatearFecha(oferta.vigenciaInicio)} al ${formatearFecha(oferta.vigenciaFin)}
+                        Válido del ${formatearFecha(oferta.vigenciaInicio)} al ${formatearFecha(oferta.vigenciaFin)}
                     </div>
                 </div>
             `;
@@ -489,11 +392,10 @@
             if (nombre.includes('huevo')) return '🥚';
             if (nombre.includes('manzana') || nombre.includes('fruta')) return '🍎';
             if (nombre.includes('pollo') || nombre.includes('carne')) return '🍗';
-            if (nombre.includes('jabon') || nombre.includes('limpieza')) return '🧴';
+            if (nombre.includes('jabón') || nombre.includes('limpieza')) return '🧴';
             if (nombre.includes('tomate') || nombre.includes('jitomate')) return '🍅';
             if (nombre.includes('queso')) return '🧀';
             if (nombre.includes('arroz')) return '🍚';
-            if (nombre.includes('cafe')) return '☕';
             
             return '🛒';
         }
@@ -513,6 +415,7 @@
                 );
             }
             
+            // Aplicar búsqueda si hay texto
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             if (searchTerm) {
                 ofertasFiltradas = ofertasFiltradas.filter(
@@ -523,18 +426,21 @@
             mostrarOfertas(ofertasFiltradas);
         }
 
+        // Búsqueda en tiempo real
         document.getElementById('searchInput').addEventListener('input', function() {
             const searchTerm = this.value.toLowerCase();
             const supermercadoActivo = document.querySelector('.filter-btn.active').dataset.supermercado;
             
             let ofertasFiltradas = todasLasOfertas;
             
+            // Filtrar por supermercado si no es "Todos"
             if (supermercadoActivo) {
                 ofertasFiltradas = ofertasFiltradas.filter(
                     o => o.supermercado === supermercadoActivo
                 );
             }
             
+            // Filtrar por búsqueda
             if (searchTerm) {
                 ofertasFiltradas = ofertasFiltradas.filter(
                     o => o.producto.toLowerCase().includes(searchTerm) ||
@@ -544,15 +450,6 @@
             
             mostrarOfertas(ofertasFiltradas);
         });
-
-        function logout() {
-            localStorage.clear();
-            window.location.href = 'index.html';
-        }
     </script>
-    <button class="fab-button" onclick="window.location.href='reportes.html'">📝</button>
-    <div class="fab-tooltip">Reportar Inconsistencia</div>
 </body>
 </html>
-
-        

@@ -11,7 +11,7 @@ async function publicarNotificacion(notificacion) {
   const channel = rabbitmqService.obtenerCanal();
   
   if (!channel) {
-    console.error('❌ Canal de RabbitMQ no disponible para notificaciones');
+    console.error('Canal de RabbitMQ no disponible para notificaciones');
     return false;
   }
   
@@ -24,14 +24,14 @@ async function publicarNotificacion(notificacion) {
     );
     
     if (exito) {
-      console.log('📢 Notificación publicada:', notificacion.tipo);
+      console.log('Notificación publicada:', notificacion.tipo);
       return true;
     } else {
-      console.warn('⚠️  Buffer de RabbitMQ lleno, notificación no enviada');
+      console.warn('Buffer de RabbitMQ lleno, notificación no enviada');
       return false;
     }
   } catch (error) {
-    console.error('❌ Error publicando notificación:', error.message);
+    console.error('Error publicando notificación:', error.message);
     return false;
   }
 }

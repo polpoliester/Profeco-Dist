@@ -15,10 +15,10 @@ async function conectar() {
     
     await channel.assertQueue(QUEUE_OFERTAS, { durable: true });
     
-    console.log('✅ Conectado a RabbitMQ');
+    console.log('Conectado a RabbitMQ:D');
     return true;
   } catch (error) {
-    console.error('❌ Error conectando a RabbitMQ:', error.message);
+    console.error('Error conectando a RabbitMQ:', error.message);
     setTimeout(conectar, 5000);
     return false;
   }
@@ -30,13 +30,13 @@ async function consumirMensajes() {
     return;
   }
   
-  console.log('📨 Esperando mensajes en la cola:', QUEUE_OFERTAS);
+  console.log('Esperando mensajes en la cola:', QUEUE_OFERTAS);
   
   channel.consume(QUEUE_OFERTAS, async (msg) => {
     if (msg !== null) {
       try {
         const mensaje = JSON.parse(msg.content.toString());
-        console.log('📨 Mensaje recibido:', mensaje.operacion);
+        console.log('Mensaje recibido:', mensaje.operacion);
         
         const respuesta = await procesarMensaje(mensaje);
         
@@ -50,7 +50,7 @@ async function consumirMensajes() {
         
         channel.ack(msg);
       } catch (error) {
-        console.error('❌ Error procesando mensaje:', error.message);
+        console.error('Error procesando mensaje:', error.message);
         channel.nack(msg, false, false);
       }
     }
@@ -92,7 +92,7 @@ async function cerrar() {
   try {
     if (channel) await channel.close();
     if (connection) await connection.close();
-    console.log('✅ Conexión a RabbitMQ cerrada');
+    console.log('Conexión a RabbitMQ cerrada:D');
   } catch (error) {
     console.error('Error cerrando RabbitMQ:', error.message);
   }
