@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PROFECO - Catálogo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f5f5f5;
+        }
+
+        .header {
+            background-color: #8B1538;
+            color: white;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .back-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            margin-right: 16px;
+        }
+
+        .header h1 {
+            font-size: 20px;
+            font-weight: 500;
+        }
+
+        .content {
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .search-box {
+            background: white;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+        }
+
+        .search-box input {
+            flex: 1;
+            border: none;
+            outline: none;
+            font-size: 16px;
+            color: #666;
+        }
+
+        .search-icon {
+            color: #999;
+            margin-right: 12px;
+            font-size: 20px;
+        }
+
+        .filter-section {
+            background: white;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .filter-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 12px;
+        }
+
+        .filter-options {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .filter-btn:hover {
+            background: #f0f0f0;
+        }
+
+        .filter-btn.active {
+            background: #8B1538;
+            color: white;
+            border-color: #8B1538;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .error {
+            background: #fee;
+            border: 1px solid #fcc;
+            border-radius: 8px;
+            padding: 16px;
+            color: #c33;
+            margin-bottom: 20px;
+        }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .product-card {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .product-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .discount-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #8B1538;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 14px;
+            z-index: 1;
+        }
+
+        .product-image {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            color: white;
+        }
+
+        .product-info {
+            padding: 16px;
+        }
+
+        .product-name {
+            font-size: 16px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .price-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .product-price-original {
+            font-size: 14px;
+            color: #999;
+            text-decoration: line-through;
+        }
+
+        .product-price {
+            font-size: 20px;
+            font-weight: 600;
+            color: #8B1538;
+        }
+
+        .product-store {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .vigencia {
+            font-size: 12px;
+            color: #999;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <button class="back-btn" onclick="history.back()">←</button>
+        <h1>Catálogo de Ofertas</h1>
+    </div>
+
+    <div class="content">
+        <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" placeholder="Buscar productos..." id="searchInput">
+        </div>
+
+        <div class="filter-section">
+            <div class="filter-title">Supermercados</div>
+            <div class="filter-options" id="filterOptions">
+                <button class="filter-btn active" data-supermercado="">Todos</button>
+            </div>
+        </div>
+
+        <div id="errorContainer"></div>
+        <div id="loadingContainer" class="loading">Cargando ofertas...</div>
+        <div class="product-grid" id="productGrid"></div>
+        <div id="noResults" class="no-results" style="display: none;">
+            No se encontraron ofertas
+        </div>
+    </div>
+
+    <script>
+        // URL base de tu API - CAMBIA ESTO según tu configuración
+const API_BASE_URL = 'http://localhost:3001/api';        
+        let todasLasOfertas = [];
+        let supermercadosFiltro = new Set();
+
+        // Cargar ofertas al iniciar
+        document.addEventListener('DOMContentLoaded', cargarOfertas);
+
+        async function cargarOfertas() {
+            const loadingContainer = document.getElementById('loadingContainer');
+            const errorContainer = document.getElementById('errorContainer');
+            const productGrid = document.getElementById('productGrid');
+            
+            try {
+                loadingContainer.style.display = 'block';
+                errorContainer.innerHTML = '';
+                
+                // Llamar a tu API para obtener ofertas activas
+                const response = await fetch(`${API_BASE_URL}/ofertas?activa=true`);
+                
+                if (!response.ok) {
+                    throw new Error(`Error HTTP: ${response.status}`);
+                }
+                
+                const resultado = await response.json();
+                
+                if (!resultado.success) {
+                    throw new Error(resultado.mensaje || 'Error al cargar ofertas');
+                }
+                
+                todasLasOfertas = resultado.data || [];
+                
+                // Extraer supermercados únicos para filtros
+                todasLasOfertas.forEach(oferta => {
+                    supermercadosFiltro.add(oferta.supermercado);
+                });
+                
+                // Crear botones de filtro
+                crearFiltrosSupermercado();
+                
+                // Mostrar ofertas
+                mostrarOfertas(todasLasOfertas);
+                
+            } catch (error) {
+                console.error('Error al cargar ofertas:', error);
+                errorContainer.innerHTML = `
+                    <div class="error">
+                        Error al cargar las ofertas: ${error.message}
+                    </div>
+                `;
+            } finally {
+                loadingContainer.style.display = 'none';
+            }
+        }
+
+        function crearFiltrosSupermercado() {
+            const filterOptions = document.getElementById('filterOptions');
+            
+            supermercadosFiltro.forEach(supermercado => {
+                const btn = document.createElement('button');
+                btn.className = 'filter-btn';
+                btn.textContent = supermercado;
+                btn.dataset.supermercado = supermercado;
+                filterOptions.appendChild(btn);
+            });
+            
+            // Añadir event listeners a filtros
+            const filterBtns = document.querySelectorAll('.filter-btn');
+            filterBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    filterBtns.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    const supermercado = this.dataset.supermercado;
+                    filtrarOfertas(supermercado);
+                });
+            });
+        }
+
+        function mostrarOfertas(ofertas) {
+            const productGrid = document.getElementById('productGrid');
+            const noResults = document.getElementById('noResults');
+            
+            productGrid.innerHTML = '';
+            
+            if (ofertas.length === 0) {
+                noResults.style.display = 'block';
+                return;
+            }
+            
+            noResults.style.display = 'none';
+            
+            ofertas.forEach((oferta, index) => {
+                const card = crearTarjetaProducto(oferta, index);
+                productGrid.appendChild(card);
+            });
+        }
+
+        function crearTarjetaProducto(oferta, index) {
+            const colores = [
+                'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+                'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+                'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+                'linear-gradient(135deg, #30cfd0 0%, #330867 100%)'
+            ];
+            
+            const card = document.createElement('div');
+            card.className = 'product-card';
+            
+            const icono = obtenerIconoProducto(oferta.producto);
+            const colorFondo = colores[index % colores.length];
+            
+            card.innerHTML = `
+                <div class="discount-badge">-${oferta.descuento}%</div>
+                <div class="product-image" style="background: ${colorFondo};">
+                    ${icono}
+                </div>
+                <div class="product-info">
+                    <div class="product-name">${oferta.producto}</div>
+                    <div class="price-container">
+                        <span class="product-price-original">$${parseFloat(oferta.precioOriginal).toFixed(2)}</span>
+                        <span class="product-price">$${parseFloat(oferta.precioOferta).toFixed(2)}</span>
+                    </div>
+                    <div class="product-store">${oferta.supermercado}</div>
+                    <div class="vigencia">
+                        Válido del ${formatearFecha(oferta.vigenciaInicio)} al ${formatearFecha(oferta.vigenciaFin)}
+                    </div>
+                </div>
+            `;
+            
+            return card;
+        }
+
+        function obtenerIconoProducto(nombreProducto) {
+            const nombre = nombreProducto.toLowerCase();
+            
+            if (nombre.includes('leche')) return '🥛';
+            if (nombre.includes('pan')) return '🍞';
+            if (nombre.includes('huevo')) return '🥚';
+            if (nombre.includes('manzana') || nombre.includes('fruta')) return '🍎';
+            if (nombre.includes('pollo') || nombre.includes('carne')) return '🍗';
+            if (nombre.includes('jabón') || nombre.includes('limpieza')) return '🧴';
+            if (nombre.includes('tomate') || nombre.includes('jitomate')) return '🍅';
+            if (nombre.includes('queso')) return '🧀';
+            if (nombre.includes('arroz')) return '🍚';
+            
+            return '🛒';
+        }
+
+        function formatearFecha(fecha) {
+            const date = new Date(fecha + 'T00:00:00');
+            const opciones = { year: 'numeric', month: 'short', day: 'numeric' };
+            return date.toLocaleDateString('es-MX', opciones);
+        }
+
+        function filtrarOfertas(supermercado) {
+            let ofertasFiltradas = todasLasOfertas;
+            
+            if (supermercado) {
+                ofertasFiltradas = todasLasOfertas.filter(
+                    o => o.supermercado === supermercado
+                );
+            }
+            
+            // Aplicar búsqueda si hay texto
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            if (searchTerm) {
+                ofertasFiltradas = ofertasFiltradas.filter(
+                    o => o.producto.toLowerCase().includes(searchTerm)
+                );
+            }
+            
+            mostrarOfertas(ofertasFiltradas);
+        }
+
+        // Búsqueda en tiempo real
+        document.getElementById('searchInput').addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const supermercadoActivo = document.querySelector('.filter-btn.active').dataset.supermercado;
+            
+            let ofertasFiltradas = todasLasOfertas;
+            
+            // Filtrar por supermercado si no es "Todos"
+            if (supermercadoActivo) {
+                ofertasFiltradas = ofertasFiltradas.filter(
+                    o => o.supermercado === supermercadoActivo
+                );
+            }
+            
+            // Filtrar por búsqueda
+            if (searchTerm) {
+                ofertasFiltradas = ofertasFiltradas.filter(
+                    o => o.producto.toLowerCase().includes(searchTerm) ||
+                         o.supermercado.toLowerCase().includes(searchTerm)
+                );
+            }
+            
+            mostrarOfertas(ofertasFiltradas);
+        });
+    </script>
+</body>
+</html>

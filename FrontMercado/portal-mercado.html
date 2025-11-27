@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PROFECO - Portal Mercado</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f5f5f5;
+        }
+
+        .header {
+            background-color: #8B1538;
+            color: white;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .back-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            margin-right: 16px;
+        }
+
+        .header h1 {
+            font-size: 20px;
+            font-weight: 500;
+        }
+
+        .content {
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .promo-banner {
+            background: linear-gradient(135deg, #8B1538 0%, #a91d47 100%);
+            color: white;
+            padding: 24px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(139, 21, 56, 0.3);
+        }
+
+        .promo-banner h3 {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .promo-banner p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .market-section {
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 22px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #8B1538;
+        }
+
+        .store-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .store-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .store-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        }
+
+        .store-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #8B1538 0%, #a91d47 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 12px;
+            font-size: 28px;
+            color: white;
+        }
+
+        .store-name {
+            font-size: 16px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .store-products {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .category-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 12px;
+        }
+
+        .category-item {
+            background: white;
+            padding: 16px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .category-item:hover {
+            background: #f8f8f8;
+            transform: scale(1.05);
+        }
+
+        .category-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .category-name {
+            font-size: 14px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .offers-section {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+
+        .offer-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .offer-item:last-child {
+            border-bottom: none;
+        }
+
+        .offer-item:hover {
+            background: #f9f9f9;
+        }
+
+        .offer-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-right: 16px;
+        }
+
+        .offer-info {
+            flex: 1;
+        }
+
+        .offer-name {
+            font-size: 16px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .offer-discount {
+            font-size: 14px;
+            color: #8B1538;
+            font-weight: 600;
+        }
+
+        .offer-store {
+            font-size: 12px;
+            color: #666;
+            margin-top: 2px;
+        }
+
+        .search-stores {
+            background: white;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+        }
+
+        .search-stores input {
+            flex: 1;
+            border: none;
+            outline: none;
+            font-size: 16px;
+            color: #666;
+        }
+
+        .search-icon {
+            color: #999;
+            margin-right: 12px;
+            font-size: 20px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <button class="back-btn" onclick="history.back()">←</button>
+        <h1>Portal Mercado</h1>
+    </div>
+
+    <div class="content">
+        <div class="promo-banner">
+            <h3>🎉 Promociones del Día</h3>
+            <p>Compara precios y ahorra en tus compras</p>
+        </div>
+
+        <div class="search-stores">
+            <span class="search-icon">🔍</span>
+            <input type="text" placeholder="Buscar tiendas o productos...">
+        </div>
+
+        <div class="market-section">
+            <h2 class="section-title">Tiendas Participantes</h2>
+            <div class="store-grid" id="storeGrid">
+                <div class="loading">Cargando tiendas...</div>
+            </div>
+        </div>
+
+        <div class="market-section">
+            <h2 class="section-title">Promociones Destacadas</h2>
+            <div class="offers-section" id="offersSection">
+                <div class="loading">Cargando promociones...</div>
+            </div>
+        </div>
+
+        <div class="market-section">
+            <h2 class="section-title">Categorías Populares</h2>
+            <div class="category-list">
+                <div class="category-item">
+                    <div class="category-icon">🥬</div>
+                    <div class="category-name">Frutas y Verduras</div>
+                </div>
+                <div class="category-item">
+                    <div class="category-icon">🥩</div>
+                    <div class="category-name">Carnes y Pescados</div>
+                </div>
+                <div class="category-item">
+                    <div class="category-icon">🥛</div>
+                    <div class="category-name">Lácteos</div>
+                </div>
+                <div class="category-item">
+                    <div class="category-icon">🍞</div>
+                    <div class="category-name">Panadería</div>
+                </div>
+                <div class="category-item">
+                    <div class="category-icon">🧴</div>
+                    <div class="category-name">Higiene Personal</div>
+                </div>
+                <div class="category-item">
+                    <div class="category-icon">🧹</div>
+                    <div class="category-name">Limpieza Hogar</div>
+                </div>
+                <div class="category-item">
+                    <div class="category-icon">🍪</div>
+                    <div class="category-name">Despensa</div>
+                </div>
+                <div class="category-item">
+                    <div class="category-icon">❄️</div>
+                    <div class="category-name">Congelados</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:3001/api';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            cargarOfertas();
+        });
+
+        async function cargarOfertas() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/ofertas`);
+                const resultado = await response.json();
+
+                if (resultado.success) {
+                    const ofertas = resultado.data;
+                    mostrarTiendas(ofertas);
+                    mostrarOfertas(ofertas);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('storeGrid').innerHTML = '<div class="loading">Error al cargar datos</div>';
+                document.getElementById('offersSection').innerHTML = '<div class="loading">Error al cargar promociones</div>';
+            }
+        }
+
+        function mostrarTiendas(ofertas) {
+            const storeGrid = document.getElementById('storeGrid');
+            const tiendas = {};
+
+            ofertas.forEach(oferta => {
+                if (!tiendas[oferta.supermercado]) {
+                    tiendas[oferta.supermercado] = 0;
+                }
+                tiendas[oferta.supermercado]++;
+            });
+
+            storeGrid.innerHTML = '';
+
+            Object.entries(tiendas).forEach(([nombre, cantidad]) => {
+                const icono = obtenerIconoTienda(nombre);
+                const card = document.createElement('div');
+                card.className = 'store-card';
+                card.innerHTML = `
+                    <div class="store-icon">${icono}</div>
+                    <div class="store-name">${nombre}</div>
+                    <div class="store-products">${cantidad} productos</div>
+                `;
+                storeGrid.appendChild(card);
+            });
+        }
+
+        function mostrarOfertas(ofertas) {
+            const offersSection = document.getElementById('offersSection');
+            offersSection.innerHTML = '';
+
+            const colores = [
+                'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+                'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+                'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+            ];
+
+            ofertas.slice(0, 5).forEach((oferta, index) => {
+                const icono = obtenerIconoProducto(oferta.producto);
+                const item = document.createElement('div');
+                item.className = 'offer-item';
+                item.innerHTML = `
+                    <div class="offer-icon" style="background: ${colores[index % colores.length]};">${icono}</div>
+                    <div class="offer-info">
+                        <div class="offer-name">${oferta.producto}</div>
+                        <div class="offer-discount">${oferta.descuento}% de descuento - $${parseFloat(oferta.precioOferta).toFixed(2)}</div>
+                        <div class="offer-store">${oferta.supermercado}</div>
+                    </div>
+                `;
+                offersSection.appendChild(item);
+            });
+        }
+
+        function obtenerIconoTienda(nombre) {
+            const iconos = {
+                'Walmart': '🏪',
+                'Soriana': '🛒',
+                'Chedraui': '🏬',
+                'La Comer': '🛍️',
+                'Bodega Aurrera': '🏪',
+                'HEB': '🛒'
+            };
+            return iconos[nombre] || '🏪';
+        }
+
+        function obtenerIconoProducto(nombreProducto) {
+            const nombre = nombreProducto.toLowerCase();
+            
+            if (nombre.includes('leche')) return '🥛';
+            if (nombre.includes('pan')) return '🍞';
+            if (nombre.includes('huevo')) return '🥚';
+            if (nombre.includes('manzana') || nombre.includes('fruta')) return '🍎';
+            if (nombre.includes('pollo') || nombre.includes('carne')) return '🍗';
+            if (nombre.includes('jabón') || nombre.includes('limpieza')) return '🧴';
+            if (nombre.includes('coca') || nombre.includes('refresco')) return '🥤';
+            if (nombre.includes('tomate') || nombre.includes('jitomate')) return '🍅';
+            if (nombre.includes('queso')) return '🧀';
+            if (nombre.includes('arroz')) return '🍚';
+            
+            return '🛒';
+        }
+    </script>
+</body>
+</html>
