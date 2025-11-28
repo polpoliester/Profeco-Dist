@@ -1,14 +1,11 @@
 const express = require('express');
-const cors = require('cors');
 const { conectarDB, sincronizarModelos, cerrarConexion } = require('./config/database');
 const Oferta = require('./models/Oferta');
-// const rabbitmqService = require('./services/rabbitmqService');
+const rabbitmqService = require('./services/rabbitmqService');
 
 const app = express();
 const PORT = 3001;
 
-// CORS debe estar ANTES de las rutas
-app.use(cors());
 app.use(express.json());
 
 app.get('/health', (req, res) => {
@@ -17,10 +14,7 @@ app.get('/health', (req, res) => {
 
 app.get('/api/ofertas', async (req, res) => {
   try {
-    const ofertas = await Oferta.findAll({ 
-      where: { activa: true },
-      order: [['createdAt', 'DESC']] 
-    });
+    const ofertas = await Oferta.findAll({ order: [['createdAt', 'DESC']] });
     res.json({ success: true, data: ofertas, total: ofertas.length });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
@@ -37,23 +31,27 @@ app.post('/api/ofertas', async (req, res) => {
 });
 
 async function iniciar() {
-  console.log('🚀 Iniciando servidor...');
+  console.log('Iniciando servidor de Ofertas...');
   
   const conectado = await conectarDB();
   if (conectado) {
     await sincronizarModelos();
   }
   
+  await rabbitmqService.conectar();
+  await rabbitmqService.consumirMensajes();
+  
   app.listen(PORT, () => {
-    console.log(`✅ Servidor en http://localhost:${PORT}`);
-    console.log('📋 GET  /health');
-    console.log('📋 GET  /api/ofertas');
-    console.log('📋 POST /api/ofertas\n');
+    console.log(`Servidor en http://localhost:${PORT}`);
+    console.log('GET  /health');
+    console.log('GET  /api/ofertas');
+    console.log('POST /api/ofertas');
   });
 }
 
 process.on('SIGINT', async () => {
   await cerrarConexion();
+  await rabbitmqService.cerrar();
   process.exit(0);
 });
 

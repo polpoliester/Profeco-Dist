@@ -1,4 +1,3 @@
-// services/rabbitmqService.js
 const amqp = require('amqplib');
 const Oferta = require('../models/Oferta');
 
@@ -10,15 +9,16 @@ const QUEUE_OFERTAS = 'ofertas_queue';
 
 async function conectar() {
   try {
+    console.log('Intentando conectar a RabbitMQ...');
     connection = await amqp.connect(RABBITMQ_URL);
     channel = await connection.createChannel();
     
     await channel.assertQueue(QUEUE_OFERTAS, { durable: true });
     
-    console.log('Conectado a RabbitMQ:D');
+    console.log('Conectado a RabbitMQ - Ofertas');
     return true;
   } catch (error) {
-    console.error('Error conectando a RabbitMQ:', error.message);
+    console.error('Error conectando a RabbitMQ Ofertas:', error.message);
     setTimeout(conectar, 5000);
     return false;
   }
@@ -30,7 +30,7 @@ async function consumirMensajes() {
     return;
   }
   
-  console.log('Esperando mensajes en la cola:', QUEUE_OFERTAS);
+  console.log('Esperando mensajes en ofertas_queue...');
   
   channel.consume(QUEUE_OFERTAS, async (msg) => {
     if (msg !== null) {
@@ -46,6 +46,7 @@ async function consumirMensajes() {
             Buffer.from(JSON.stringify(respuesta)),
             { correlationId: mensaje.correlationId }
           );
+          console.log('Respuesta enviada');
         }
         
         channel.ack(msg);
@@ -61,10 +62,21 @@ async function procesarMensaje(mensaje) {
   try {
     switch (mensaje.operacion) {
       case 'obtener_ofertas':
+        const where = {};
+        if (mensaje.filtros) {
+          if (mensaje.filtros.supermercadoId) {
+            where.supermercadoId = mensaje.filtros.supermercadoId;
+          }
+          if (mensaje.filtros.activa !== undefined) {
+            where.activa = mensaje.filtros.activa;
+          }
+        }
+        
         const ofertas = await Oferta.findAll({
-          where: mensaje.filtros || {},
+          where,
           order: [['createdAt', 'DESC']]
         });
+        
         return { success: true, data: ofertas, total: ofertas.length };
         
       case 'crear_oferta':
@@ -80,10 +92,10 @@ async function procesarMensaje(mensaje) {
         return { success: true, mensaje: 'Oferta actualizada exitosamente', data: oferta };
         
       default:
-        return { success: false, mensaje: `Operación no soportada: ${mensaje.operacion}` };
+        return { success: false, mensaje: `Operacion no soportada: ${mensaje.operacion}` };
     }
   } catch (error) {
-    console.error('Error en procesarMensaje:', error);
+    console.error('Error en procesarMensaje:', error.message);
     return { success: false, mensaje: 'Error procesando solicitud', error: error.message };
   }
 }
@@ -92,7 +104,7 @@ async function cerrar() {
   try {
     if (channel) await channel.close();
     if (connection) await connection.close();
-    console.log('Conexión a RabbitMQ cerrada:D');
+    console.log('Conexion RabbitMQ cerrada - Ofertas');
   } catch (error) {
     console.error('Error cerrando RabbitMQ:', error.message);
   }

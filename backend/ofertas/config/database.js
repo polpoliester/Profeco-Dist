@@ -1,5 +1,6 @@
 const { Sequelize } = require('sequelize');
 
+//                                                  Tu contraseña MySQL
 const sequelize = new Sequelize('profeco_db', 'root', 'root', {
   host: 'localhost',
   dialect: 'mysql',
