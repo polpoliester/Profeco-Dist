@@ -1,79 +1,56 @@
-const RABBITMQ_CONFIG = require('../config/rabbitmq');
-const rabbitmqService = require('../rabbitmqService');
+const Notificacion = require('../models/Notificacion');
 
-/**
- * Publicar una notificación en RabbitMQ
- */
-async function publicarNotificacion(notificacion) {
-  const channel = rabbitmqService.obtenerCanal();
-  
-  if (!channel) {
-    console.error('❌ Canal de RabbitMQ no disponible para notificaciones');
-    return false;
-  }
-  
+async function obtenerNotificaciones(usuarioId) {
   try {
-    const exito = channel.publish(
-      RABBITMQ_CONFIG.exchanges.notificaciones,
-      '',
-      Buffer.from(JSON.stringify(notificacion)),
-      { persistent: true }
-    );
+    const notificaciones = await Notificacion.findAll({
+      where: { usuarioId },
+      order: [['createdAt', 'DESC']],
+      limit: 50
+    });
     
-    if (exito) {
-      console.log('📢 Notificación publicada:', notificacion.tipo);
-      return true;
-    }
-    return false;
-
+    return {
+      ok: true,
+      data: notificaciones
+    };
   } catch (error) {
-    console.error('❌ Error publicando notificación:', error.message);
-    return false;
+    console.error('Error obteniendo notificaciones:', error);
+    return {
+      ok: false,
+      mensaje: 'Error al obtener notificaciones',
+      error: error.message
+    };
   }
 }
 
-/**
- * Ofertas
- */
-async function notificarNuevaOferta(oferta) {
-  return await publicarNotificacion({
-    tipo: 'nueva_oferta',
-    oferta,
-    timestamp: new Date().toISOString()
-  });
-}
-
-async function notificarOfertaActualizada(oferta) {
-  return await publicarNotificacion({
-    tipo: 'oferta_actualizada',
-    oferta,
-    timestamp: new Date().toISOString()
-  });
-}
-
-async function notificarOfertaEliminada(ofertaId) {
-  return await publicarNotificacion({
-    tipo: 'oferta_eliminada',
-    ofertaId,
-    timestamp: new Date().toISOString()
-  });
-}
-
-/**
- * Wishlist
- */
-async function notificarWishlistAgregada(wishlistItem) {
-  return await publicarNotificacion({
-    tipo: "wishlist_agregada",
-    wishlist: wishlistItem,
-    timestamp: new Date().toISOString()
-  });
+async function marcarLeida(id) {
+  try {
+    const notificacion = await Notificacion.findByPk(id);
+    
+    if (!notificacion) {
+      return {
+        ok: false,
+        mensaje: 'Notificacion no encontrada'
+      };
+    }
+    
+    await notificacion.update({ leida: true });
+    
+    return {
+      ok: true,
+      mensaje: 'Notificacion marcada como leida',
+      data: notificacion
+    };
+  } catch (error) {
+    console.error('Error marcando notificacion:', error);
+    return {
+      ok: false,
+      mensaje: 'Error al marcar notificacion',
+      error: error.message
+    };
+  }
 }
 
 module.exports = {
-  publicarNotificacion,
-  notificarNuevaOferta,
-  notificarOfertaActualizada,
-  notificarOfertaEliminada,
-  notificarWishlistAgregada
+  obtenerNotificaciones,
+  marcarLeida
 };

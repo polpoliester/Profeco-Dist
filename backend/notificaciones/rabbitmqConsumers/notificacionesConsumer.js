@@ -1,15 +1,12 @@
-const rabbitmqService = require("../rabbitmqService");
+const rabbitmqService = require("../services/rabbitmqService");
 const RABBITMQ_CONFIG = require("../config/rabbitmq");
 const Notificacion = require("../models/Notificacion");
 
-/**
- * Consumidor de notificaciones (fanout)
- */
 async function iniciarNotificacionesConsumer() {
   const canal = rabbitmqService.obtenerCanal();
 
   if (!canal) {
-    console.error("❌ No hay canal disponible para consumir notificaciones");
+    console.error("No hay canal disponible para consumir notificaciones");
     return;
   }
 
@@ -21,7 +18,7 @@ async function iniciarNotificacionesConsumer() {
 
   canal.bindQueue(queue, exchange, "");
 
-  console.log("📥 Esperando notificaciones...");
+  console.log("Esperando notificaciones...");
 
   canal.consume(queue, async (msg) => {
     if (!msg) return;
@@ -31,12 +28,9 @@ async function iniciarNotificacionesConsumer() {
 
       let usuarioDestino = 1;
 
-      // Wishlist
       if (data.tipo === "wishlist_agregada" && data.wishlist?.usuarioId) {
         usuarioDestino = data.wishlist.usuarioId;
       }
-
-      // Oferta
       else if (data.oferta?.usuarioId) {
         usuarioDestino = data.oferta.usuarioId;
       }
@@ -47,9 +41,9 @@ async function iniciarNotificacionesConsumer() {
         payload: data,
       });
 
-      console.log(`🔔 Notificación guardada: ${data.tipo}`);
+      console.log(`Notificacion guardada: ${data.tipo}`);
     } catch (error) {
-      console.error("❌ Error procesando mensaje:", error.message);
+      console.error("Error procesando mensaje:", error.message);
     }
   });
 }
