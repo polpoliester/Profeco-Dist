@@ -205,6 +205,215 @@ app.put('/api/ofertas/:id', authenticateToken, authorize('supermercado', 'profec
   }
 });
 
+// Rutas de Quejas
+app.get('/api/quejas', authenticateToken, async (req, res) => {
+  try {
+    const respuesta = await enviarMensajeRPC(RABBITMQ_CONFIG.queues.quejas, {
+      operacion: 'obtener_quejas',
+      filtros: {
+        usuarioId: req.query.usuarioId ? parseInt(req.query.usuarioId) : undefined,
+        estado: req.query.estado,
+        tipo: req.query.tipo,
+        supermercadoId: req.query.supermercadoId ? parseInt(req.query.supermercadoId) : undefined
+      },
+      usuario: req.user
+    });
+
+    res.json(respuesta);
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({
+      success: false,
+      mensaje: 'Error comunicandose con el microservicio',
+      error: error.message
+    });
+  }
+});
+
+app.get('/api/quejas/estadisticas', authenticateToken, authorize('profeco'), async (req, res) => {
+  try {
+    const respuesta = await enviarMensajeRPC(RABBITMQ_CONFIG.queues.quejas, {
+      operacion: 'obtener_estadisticas',
+      usuario: req.user
+    });
+
+    res.json(respuesta);
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({
+      success: false,
+      mensaje: 'Error comunicandose con el microservicio',
+      error: error.message
+    });
+  }
+});
+
+app.get('/api/quejas/:id', authenticateToken, async (req, res) => {
+  try {
+    const respuesta = await enviarMensajeRPC(RABBITMQ_CONFIG.queues.quejas, {
+      operacion: 'obtener_queja',
+      id: parseInt(req.params.id),
+      usuario: req.user
+    });
+
+    res.status(respuesta.success ? 200 : 404).json(respuesta);
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({
+      success: false,
+      mensaje: 'Error comunicandose con el microservicio',
+      error: error.message
+    });
+  }
+});
+
+app.post('/api/quejas', authenticateToken, async (req, res) => {
+  try {
+    const respuesta = await enviarMensajeRPC(RABBITMQ_CONFIG.queues.quejas, {
+      operacion: 'crear_queja',
+      datos: {
+        ...req.body,
+        usuarioId: req.user.id
+      },
+      usuario: req.user
+    });
+
+    res.status(respuesta.success ? 201 : 400).json(respuesta);
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({
+      success: false,
+      mensaje: 'Error comunicandose con el microservicio',
+      error: error.message
+    });
+  }
+});
+
+app.put('/api/quejas/:id/estado', authenticateToken, authorize('profeco'), async (req, res) => {
+  try {
+    const respuesta = await enviarMensajeRPC(RABBITMQ_CONFIG.queues.quejas, {
+      operacion: 'actualizar_estado_queja',
+      id: parseInt(req.params.id),
+      datos: req.body,
+      usuarioId: req.user.id,
+      usuario: req.user
+    });
+
+    res.status(respuesta.success ? 200 : 404).json(respuesta);
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({
+      success: false,
+      mensaje: 'Error comunicandose con el microservicio',
+      error: error.message
+    });
+  }
+});
+
+// Rutas de Gestión de Precios (Reportes)
+app.get('/api/reportes', authenticateToken, async (req, res) => {
+  try {
+    const respuesta = await enviarMensajeRPC(RABBITMQ_CONFIG.queues.reportes, {
+      operacion: 'obtener_reportes',
+      filtros: {
+        usuarioId: req.query.usuarioId ? parseInt(req.query.usuarioId) : undefined,
+        estado: req.query.estado,
+        supermercadoId: req.query.supermercadoId ? parseInt(req.query.supermercadoId) : undefined
+      },
+      usuario: req.user
+    });
+
+    res.json(respuesta);
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({
+      success: false,
+      mensaje: 'Error comunicandose con el microservicio',
+      error: error.message
+    });
+  }
+});
+
+app.get('/api/reportes/estadisticas', authenticateToken, authorize('profeco'), async (req, res) => {
+  try {
+    const respuesta = await enviarMensajeRPC(RABBITMQ_CONFIG.queues.reportes, {
+      operacion: 'obtener_estadisticas',
+      usuario: req.user
+    });
+
+    res.json(respuesta);
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({
+      success: false,
+      mensaje: 'Error comunicandose con el microservicio',
+      error: error.message
+    });
+  }
+});
+
+app.get('/api/reportes/:id', authenticateToken, async (req, res) => {
+  try {
+    const respuesta = await enviarMensajeRPC(RABBITMQ_CONFIG.queues.reportes, {
+      operacion: 'obtener_reporte',
+      id: parseInt(req.params.id),
+      usuario: req.user
+    });
+
+    res.status(respuesta.success ? 200 : 404).json(respuesta);
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({
+      success: false,
+      mensaje: 'Error comunicandose con el microservicio',
+      error: error.message
+    });
+  }
+});
+
+app.post('/api/reportes', authenticateToken, async (req, res) => {
+  try {
+    const respuesta = await enviarMensajeRPC(RABBITMQ_CONFIG.queues.reportes, {
+      operacion: 'crear_reporte',
+      datos: {
+        ...req.body,
+        usuarioId: req.user.id
+      },
+      usuario: req.user
+    });
+
+    res.status(respuesta.success ? 201 : 400).json(respuesta);
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({
+      success: false,
+      mensaje: 'Error comunicandose con el microservicio',
+      error: error.message
+    });
+  }
+});
+
+app.put('/api/reportes/:id/estado', authenticateToken, authorize('profeco'), async (req, res) => {
+  try {
+    const respuesta = await enviarMensajeRPC(RABBITMQ_CONFIG.queues.reportes, {
+      operacion: 'actualizar_estado_reporte',
+      id: parseInt(req.params.id),
+      datos: req.body,
+      usuarioId: req.user.id,
+      usuario: req.user
+    });
+
+    res.status(respuesta.success ? 200 : 404).json(respuesta);
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({
+      success: false,
+      mensaje: 'Error comunicandose con el microservicio',
+      error: error.message
+    });
+  }
+});
+
 app.get('/health', (req, res) => {
   res.json({
     status: 'OK',
@@ -227,6 +436,20 @@ app.get('/', (req, res) => {
         'GET /api/ofertas': 'Obtener ofertas (requiere autenticacion)',
         'POST /api/ofertas': 'Crear oferta (supermercado/profeco)',
         'PUT /api/ofertas/:id': 'Actualizar oferta (supermercado/profeco)'
+      },
+      quejas: {
+        'GET /api/quejas': 'Obtener quejas (requiere autenticacion)',
+        'POST /api/quejas': 'Crear queja (consumidor)',
+        'GET /api/quejas/:id': 'Obtener queja por ID',
+        'PUT /api/quejas/:id/estado': 'Actualizar estado de queja (profeco)',
+        'GET /api/quejas/estadisticas': 'Estadísticas de quejas (profeco)'
+      },
+      reportes: {
+        'GET /api/reportes': 'Obtener reportes de precios (requiere autenticacion)',
+        'POST /api/reportes': 'Crear reporte de precio (consumidor)',
+        'GET /api/reportes/:id': 'Obtener reporte por ID',
+        'PUT /api/reportes/:id/estado': 'Gestionar estado de reporte (profeco)',
+        'GET /api/reportes/estadisticas': 'Estadísticas de reportes (profeco)'
       }
     },
     usuariosPrueba: [
@@ -250,6 +473,12 @@ async function iniciar() {
     console.log('   GET    /api/ofertas');
     console.log('   POST   /api/ofertas');
     console.log('   PUT    /api/ofertas/:id');
+    console.log('   GET    /api/quejas');
+    console.log('   POST   /api/quejas');
+    console.log('   PUT    /api/quejas/:id/estado (profeco)');
+    console.log('   GET    /api/reportes');
+    console.log('   POST   /api/reportes');
+    console.log('   PUT    /api/reportes/:id/estado (profeco)');
   });
 }
 

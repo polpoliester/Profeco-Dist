@@ -1,4 +1,5 @@
 const express = require('express');
+const cors = require('cors');
 const { conectarDB, sincronizarModelos, cerrarConexion } = require('./config/database');
 const Oferta = require('./models/Oferta');
 const rabbitmqService = require('./services/rabbitmqService');
@@ -6,6 +7,7 @@ const rabbitmqService = require('./services/rabbitmqService');
 const app = express();
 const PORT = 3001;
 
+app.use(cors());
 app.use(express.json());
 
 app.get('/health', (req, res) => {

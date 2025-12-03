@@ -1,13 +1,7 @@
-// config/rabbitmq.js
 const RABBITMQ_CONFIG = {
   url: process.env.RABBITMQ_URL || 'amqp://localhost',
   queues: {
-    ofertas: 'ofertas_queue',
-    reportes: 'reportes_queue',
     quejas: 'quejas_queue'
-  },
-  exchanges: {
-    notificaciones: 'notificaciones_exchange'
   },
   options: {
     durable: true
@@ -15,3 +9,4 @@ const RABBITMQ_CONFIG = {
 };
 
 module.exports = RABBITMQ_CONFIG;
+
