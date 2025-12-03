@@ -1,6 +1,6 @@
 const { Sequelize } = require('sequelize');
 
-const sequelize = new Sequelize('profeco_db', 'root', 'monster.3242', {
+const sequelize = new Sequelize('profeco_db', 'root', 'root', {
   host: 'localhost',
   dialect: 'mysql',
   logging: false,
@@ -15,7 +15,7 @@ async function conectarDB() {
     return true;
   } catch (error) {
     console.error('Error MySQL Reportes:', error.message);
-    return false;
+    throw error; // Lanzar el error en lugar de retornar false
   }
 }
 

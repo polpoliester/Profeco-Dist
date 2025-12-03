@@ -10,3 +10,5 @@ const RABBITMQ_CONFIG = {
 
 module.exports = RABBITMQ_CONFIG;
 
+
+

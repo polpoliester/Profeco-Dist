@@ -43,7 +43,14 @@ async function connectRabbitMQ() {
   try {
     connection = await amqp.connect(RABBITMQ_CONFIG.url);
     channel = await connection.createChannel();
+    
+    // Asegurar que las colas existen
+    await channel.assertQueue(RABBITMQ_CONFIG.queues.ofertas, { durable: true });
+    await channel.assertQueue(RABBITMQ_CONFIG.queues.quejas, { durable: true });
+    await channel.assertQueue(RABBITMQ_CONFIG.queues.reportes, { durable: true });
+    
     console.log('API Gateway conectado a RabbitMQ');
+    console.log('Colas verificadas:', Object.values(RABBITMQ_CONFIG.queues).join(', '));
     return true;
   } catch (error) {
     console.error('Error conectando a RabbitMQ:', error.message);
@@ -59,18 +66,28 @@ async function enviarMensajeRPC(cola, mensaje) {
         return reject(new Error('Canal de RabbitMQ no disponible'));
       }
 
+      // Asegurar que la cola existe antes de enviar
+      await channel.assertQueue(cola, { durable: true });
+
       const { queue: colaRespuesta } = await channel.assertQueue('', { exclusive: true });
       const correlationId = uuidv4();
 
       const timeout = setTimeout(() => {
-        reject(new Error('Timeout esperando respuesta del microservicio'));
+        channel.deleteQueue(colaRespuesta);
+        reject(new Error('Timeout esperando respuesta del microservicio. Verifica que el microservicio esté ejecutándose y conectado a RabbitMQ.'));
       }, 10000);
 
       channel.consume(colaRespuesta, (msg) => {
-        if (msg.properties.correlationId === correlationId) {
+        if (msg && msg.properties.correlationId === correlationId) {
           clearTimeout(timeout);
-          const respuesta = JSON.parse(msg.content.toString());
-          resolve(respuesta);
+          try {
+            const respuesta = JSON.parse(msg.content.toString());
+            channel.deleteQueue(colaRespuesta);
+            resolve(respuesta);
+          } catch (error) {
+            channel.deleteQueue(colaRespuesta);
+            reject(new Error('Error parseando respuesta del microservicio: ' + error.message));
+          }
         }
       }, { noAck: true });
 
@@ -80,7 +97,7 @@ async function enviarMensajeRPC(cola, mensaje) {
       channel.sendToQueue(
         cola,
         Buffer.from(JSON.stringify(mensaje)),
-        { correlationId, replyTo: colaRespuesta }
+        { correlationId, replyTo: colaRespuesta, persistent: true }
       );
     } catch (error) {
       reject(error);

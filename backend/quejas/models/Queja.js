@@ -30,3 +30,5 @@ const Queja = sequelize.define('Queja', {
 
 module.exports = Queja;
 
+
+

@@ -86,3 +86,5 @@ async function cerrar() {
 
 module.exports = { conectarRabbit, consumir, cerrar };
 
+
+

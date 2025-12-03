@@ -21,3 +21,5 @@ async function conectarDB() {
 
 module.exports = { sequelize, conectarDB };
 
+
+
