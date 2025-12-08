@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PROFECO - Registrar Queja</title>
+    <link rel="stylesheet" href="styles-profeco.css">
+</head>
+<body>
+    <div class="header">
+        <div class="header-left">
+            <button class="back-btn" onclick="window.location.href='catalogo.html'">←</button>
+            <h1>Registrar Queja</h1>
+        </div>
+        <div class="user-info">
+            <span class="user-name" id="user-name"></span>
+            <button class="logout-btn" onclick="logout()">Cerrar sesión</button>
+        </div>
+    </div>
+
+    <div class="content">
+        <div class="card">
+            <h2 class="card-title">Nueva Queja</h2>
+            
+            <div id="alertContainer"></div>
+
+            <form id="quejaForm">
+                <div class="form-group">
+                    <label>Supermercado *</label>
+                    <input type="text" id="supermercado" required placeholder="Ej: Walmart, Soriana, Chedraui">
+                </div>
+
+                <div class="form-group">
+                    <label>Tipo de Queja *</label>
+                    <select id="tipo" required>
+                        <option value="">Selecciona un tipo</option>
+                        <option value="precio">Precio</option>
+                        <option value="calidad">Calidad</option>
+                        <option value="servicio">Servicio</option>
+                        <option value="publicidad_engañosa">Publicidad Engañosa</option>
+                        <option value="otro">Otro</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Título *</label>
+                    <input type="text" id="titulo" required placeholder="Resumen breve de la queja">
+                </div>
+
+                <div class="form-group">
+                    <label>Producto (opcional)</label>
+                    <input type="text" id="producto" placeholder="Ej: Leche entera 1L">
+                </div>
+
+                <div class="form-group">
+                    <label>Descripción *</label>
+                    <textarea id="descripcion" required placeholder="Describe detalladamente tu queja..."></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary" id="btnEnviar">
+                    Enviar Queja
+                </button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2 class="card-title">Mis Quejas Anteriores</h2>
+            
+            <div id="loadingQuejas" class="loading">Cargando quejas...</div>
+            
+            <div class="table-wrapper" id="tablaQuejas" style="display: none;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Supermercado</th>
+                            <th>Tipo</th>
+                            <th>Título</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="quejasTableBody"></tbody>
+                </table>
+            </div>
+
+            <div id="noQuejas" style="display: none; text-align: center; padding: 40px; color: #999;">
+                No tienes quejas anteriores
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_GATEWAY = 'http://localhost:3000/api';
+        let token = localStorage.getItem('token');
+        let usuario = JSON.parse(localStorage.getItem('usuario') || 'null');
+
+        if (!token || !usuario) {
+            window.location.href = 'index.html';
+        }
+
+        document.getElementById('user-name').textContent = usuario.nombre;
+
+        document.getElementById('quejaForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const btnEnviar = document.getElementById('btnEnviar');
+            const alertContainer = document.getElementById('alertContainer');
+            
+            btnEnviar.disabled = true;
+            btnEnviar.textContent = 'Enviando...';
+            alertContainer.innerHTML = '';
+            
+            try {
+                const datos = {
+                    supermercadoId: 1,
+                    supermercado: document.getElementById('supermercado').value,
+                    tipo: document.getElementById('tipo').value,
+                    titulo: document.getElementById('titulo').value,
+                    descripcion: document.getElementById('descripcion').value,
+                    producto: document.getElementById('producto').value || null
+                };
+                
+                const response = await fetch(`${API_GATEWAY}/quejas`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(datos)
+                });
+                
+                const resultado = await response.json();
+                
+                if (resultado.success) {
+                    alertContainer.innerHTML = `
+                        <div class="alert alert-success">
+                            Queja enviada exitosamente. Gracias por tu reporte.
+                        </div>
+                    `;
+                    
+                    document.getElementById('quejaForm').reset();
+                    
+                    cargarQuejas();
+                    
+                    setTimeout(() => {
+                        alertContainer.innerHTML = '';
+                    }, 5000);
+                } else {
+                    throw new Error(resultado.mensaje || 'Error al enviar queja');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alertContainer.innerHTML = `
+                    <div class="alert alert-error">
+                        Error al enviar la queja: ${error.message}
+                    </div>
+                `;
+            } finally {
+                btnEnviar.disabled = false;
+                btnEnviar.textContent = 'Enviar Queja';
+            }
+        });
+
+        async function cargarQuejas() {
+            const loadingQuejas = document.getElementById('loadingQuejas');
+            const tablaQuejas = document.getElementById('tablaQuejas');
+            const noQuejas = document.getElementById('noQuejas');
+            const tbody = document.getElementById('quejasTableBody');
+            
+            try {
+                loadingQuejas.style.display = 'block';
+                tablaQuejas.style.display = 'none';
+                noQuejas.style.display = 'none';
+                
+                const response = await fetch(`${API_GATEWAY}/quejas?usuarioId=${usuario.id}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                const resultado = await response.json();
+                
+                if (resultado.success && resultado.data) {
+                    const misQuejas = resultado.data.filter(q => q.usuarioId === usuario.id);
+                    
+                    if (misQuejas.length > 0) {
+                        tbody.innerHTML = '';
+                        
+                        misQuejas.forEach(queja => {
+                            const tr = document.createElement('tr');
+                            tr.innerHTML = `
+                                <td>${formatearFecha(queja.createdAt)}</td>
+                                <td>${queja.supermercado}</td>
+                                <td>${queja.tipo}</td>
+                                <td>${queja.titulo}</td>
+                                <td>${getBadgeEstado(queja.estado)}</td>
+                            `;
+                            tbody.appendChild(tr);
+                        });
+                        
+                        tablaQuejas.style.display = 'block';
+                    } else {
+                        noQuejas.style.display = 'block';
+                    }
+                }
+            } catch (error) {
+                console.error('Error cargando quejas:', error);
+                noQuejas.style.display = 'block';
+            } finally {
+                loadingQuejas.style.display = 'none';
+            }
+        }
+
+        function getBadgeEstado(estado) {
+            const badges = {
+                'pendiente': '<span class="badge badge-pending">Pendiente</span>',
+                'en_revision': '<span class="badge badge-reviewed">En Revisión</span>',
+                'resuelta': '<span class="badge badge-resolved">Resuelta</span>',
+                'rechazada': '<span class="badge badge-pending">Rechazada</span>'
+            };
+            return badges[estado] || badges['pendiente'];
+        }
+
+        function formatearFecha(fecha) {
+            const date = new Date(fecha);
+            return date.toLocaleDateString('es-MX', { 
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = 'index.html';
+        }
+
+        cargarQuejas();
+    </script>
+</body>
+</html>
+
+
+

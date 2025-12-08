@@ -11,12 +11,15 @@ async function conectarDB() {
   try {
     await sequelize.authenticate();
     await sequelize.sync({ alter: true });
-    console.log('MySQL conectado - Reportes');
+    console.log('MySQL conectado - Quejas');
     return true;
   } catch (error) {
-    console.error('Error MySQL Reportes:', error.message);
-    throw error; // Lanzar el error en lugar de retornar false
+    console.error('Error MySQL Quejas:', error.message);
+    return false;
   }
 }
 
 module.exports = { sequelize, conectarDB };
+
+
+
