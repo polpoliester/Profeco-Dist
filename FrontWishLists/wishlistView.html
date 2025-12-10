@@ -1,20 +1,11 @@
 <div class="card">
     <h2>❤️ Wishlist</h2>
-
-    <div class="form-group inline">
-        <input type="text" id="wishlistInput" placeholder="Nombre del producto">
+    
+    <div class="form-group inline" style="display: flex; gap: 10px; align-items: center;">
+        <input type="text" id="wishlistInput" placeholder="Nombre del producto" style="flex-grow: 1;">
         <button id="btnAgregarWishlist" class="btn primary small">Agregar</button>
     </div>
 
-    <div class="table-wrapper">
-        <table>
-            <thead>
-                <tr>
-                    <th>Producto</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody id="wishlistTable"></tbody>
-        </table>
-    </div>
+    <div class="product-grid" id="wishlistTable">
+        </div>
 </div>

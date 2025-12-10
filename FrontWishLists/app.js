@@ -1,9 +1,13 @@
+// Archivo: app.js
+
 const usuarioId = 1;
 const mainView = document.getElementById("mainView");
 
 // Botones del menú
 const btnWishlist = document.getElementById("btnWishlist");
 const btnNotifs = document.getElementById("btnNotifs");
+// 1. OBTENER REFERENCIA DEL NUEVO BOTÓN
+const btnFavoritos = document.getElementById("btnFavoritos");
 
 // Función para cargar vistas HTML parciales
 async function loadView(path) {
@@ -11,10 +15,17 @@ async function loadView(path) {
     mainView.innerHTML = html;
 }
 
+// Función auxiliar para gestionar la activación de botones
+function activateButton(activeButton) {
+    [btnWishlist, btnNotifs, btnFavoritos].forEach(btn => {
+        btn.classList.remove("primary");
+    });
+    activeButton.classList.add("primary");
+}
+
 // EVENTOS DE NAVEGACIÓN
 btnWishlist.onclick = () => {
-    btnWishlist.classList.add("primary");
-    btnNotifs.classList.remove("primary");
+    activateButton(btnWishlist);
 
     loadView("src/views/wishlistView.html").then(() => {
         import("./js/wishlist.js").then(mod => mod.initWishlist(usuarioId));
@@ -22,11 +33,20 @@ btnWishlist.onclick = () => {
 };
 
 btnNotifs.onclick = () => {
-    btnWishlist.classList.remove("primary");
-    btnNotifs.classList.add("primary");
+    activateButton(btnNotifs);
 
     loadView("src/views/notificacionesView.html").then(() => {
         import("./js/notificaciones.js").then(mod => mod.initNotificaciones(usuarioId));
+    });
+};
+
+// 2. NUEVO EVENTO PARA MERCADOS FAVORITOS
+btnFavoritos.onclick = () => {
+    activateButton(btnFavoritos);
+
+    // Cargar la vista HTML y luego el script JS
+    loadView("src/views/mercadosFavoritos.html").then(() => {
+        import("./js/favoritos.js").then(mod => mod.initFavoritos(usuarioId));
     });
 };
 
