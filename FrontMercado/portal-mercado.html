@@ -22,7 +22,13 @@
             padding: 16px;
             display: flex;
             align-items: center;
+            justify-content: space-between;
             box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
         }
 
         .back-btn {
@@ -37,6 +43,23 @@
         .header h1 {
             font-size: 20px;
             font-weight: 500;
+        }
+
+        .btn-publish {
+            background: white;
+            color: #8B1538;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .btn-publish:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255,255,255,0.3);
         }
 
         .content {
@@ -245,12 +268,169 @@
             padding: 20px;
             color: #666;
         }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            overflow: auto;
+        }
+
+        .modal-content {
+            background: white;
+            margin: 5% auto;
+            padding: 0;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #8B1538 0%, #a91d47 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px 12px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            font-size: 22px;
+            font-weight: 600;
+        }
+
+        .close {
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .close:hover {
+            opacity: 0.8;
+        }
+
+        .modal-body {
+            padding: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #8B1538;
+            box-shadow: 0 0 0 3px rgba(139, 21, 56, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .date-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .btn-submit {
+            width: 100%;
+            background: linear-gradient(135deg, #8B1538 0%, #a91d47 100%);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(139, 21, 56, 0.4);
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #6ee7b7;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+
+        .required {
+            color: #ef4444;
+        }
     </style>
 </head>
 <body>
     <div class="header">
-        <button class="back-btn" onclick="history.back()">←</button>
-        <h1>Portal Mercado</h1>
+        <div class="header-left">
+            <button class="back-btn" onclick="history.back()">←</button>
+            <h1>Portal Mercado</h1>
+        </div>
+        <button class="btn-publish" onclick="abrirModalPublicar()">
+            📢 Publicar Oferta
+        </button>
     </div>
 
     <div class="content">
@@ -306,7 +486,7 @@
                     <div class="category-name">Limpieza Hogar</div>
                 </div>
                 <div class="category-item">
-                    <div class="category-icon">🍪</div>
+                    <div class="category-icon">🪙</div>
                     <div class="category-name">Despensa</div>
                 </div>
                 <div class="category-item">
@@ -317,25 +497,224 @@
         </div>
     </div>
 
+    <!-- Modal Publicar Oferta -->
+    <div id="modalPublicar" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📢 Publicar Nueva Oferta</h2>
+                <span class="close" onclick="cerrarModalPublicar()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="alertContainer"></div>
+                
+                <form id="formPublicar">
+                    <div class="form-group">
+                        <label>Supermercado <span class="required">*</span></label>
+                        <select id="supermercado" required>
+                            <option value="">Selecciona un supermercado</option>
+                            <option value="Walmart">Walmart</option>
+                            <option value="Soriana">Soriana</option>
+                            <option value="Chedraui">Chedraui</option>
+                            <option value="La Comer">La Comer</option>
+                            <option value="Bodega Aurrera">Bodega Aurrera</option>
+                            <option value="HEB">HEB</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Nombre del Producto <span class="required">*</span></label>
+                        <input type="text" id="producto" required placeholder="Ej: Leche entera 1L">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Precio Anterior <span class="required">*</span></label>
+                            <input type="number" id="precioAnterior" step="0.01" min="0" required placeholder="$0.00">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Precio en Oferta <span class="required">*</span></label>
+                            <input type="number" id="precioOferta" step="0.01" min="0" required placeholder="$0.00">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Descuento (%) <span class="required">*</span></label>
+                        <input type="number" id="descuento" step="0.01" min="0" max="100" required placeholder="0" readonly>
+                    </div>
+
+                    <div class="date-row">
+                        <div class="form-group">
+                            <label>Fecha Inicio <span class="required">*</span></label>
+                            <input type="date" id="fechaInicio" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Fecha Fin <span class="required">*</span></label>
+                            <input type="date" id="fechaFin" required>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-submit" id="btnSubmit">
+                        Publicar Oferta
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script>
-        const API_BASE_URL = 'http://localhost:3001/api';
+        const API_GATEWAY = 'http://localhost:3000/api';
+        const token = localStorage.getItem('token');
+        const usuario = JSON.parse(localStorage.getItem('usuario') || 'null');
 
         document.addEventListener('DOMContentLoaded', () => {
             cargarOfertas();
+            configurarCalculoAutomatico();
+        });
+
+        function abrirModalPublicar() {
+            document.getElementById('modalPublicar').style.display = 'block';
+            document.getElementById('alertContainer').innerHTML = '';
+            document.getElementById('formPublicar').reset();
+            
+            const hoy = new Date().toISOString().split('T')[0];
+            document.getElementById('fechaInicio').value = hoy;
+            
+            const finSemana = new Date();
+            finSemana.setDate(finSemana.getDate() + 7);
+            document.getElementById('fechaFin').value = finSemana.toISOString().split('T')[0];
+        }
+
+        function cerrarModalPublicar() {
+            document.getElementById('modalPublicar').style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('modalPublicar');
+            if (event.target === modal) {
+                cerrarModalPublicar();
+            }
+        }
+
+        function configurarCalculoAutomatico() {
+            const precioAnterior = document.getElementById('precioAnterior');
+            const precioOferta = document.getElementById('precioOferta');
+            const descuento = document.getElementById('descuento');
+
+            function calcularDescuento() {
+                const anterior = parseFloat(precioAnterior.value) || 0;
+                const oferta = parseFloat(precioOferta.value) || 0;
+
+                if (anterior > 0 && oferta > 0 && oferta < anterior) {
+                    const desc = ((anterior - oferta) / anterior * 100).toFixed(2);
+                    descuento.value = desc;
+                } else {
+                    descuento.value = '';
+                }
+            }
+
+            precioAnterior.addEventListener('input', calcularDescuento);
+            precioOferta.addEventListener('input', calcularDescuento);
+        }
+
+        document.getElementById('formPublicar').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const btnSubmit = document.getElementById('btnSubmit');
+            const alertContainer = document.getElementById('alertContainer');
+            
+            btnSubmit.disabled = true;
+            btnSubmit.textContent = 'Publicando...';
+            alertContainer.innerHTML = '';
+
+            try {
+                const supermercadoId = Math.floor(Math.random() * 1000);
+                const productoId = Math.floor(Math.random() * 10000);
+                
+                // ✅ CORREGIDO: Usar nombres de campos que el modelo espera
+                const datos = {
+                    supermercadoId: supermercadoId,
+                    supermercado: document.getElementById('supermercado').value,
+                    productoId: productoId,
+                    producto: document.getElementById('producto').value,
+                    precioOriginal: parseFloat(document.getElementById('precioAnterior').value),  // ✅ precioOriginal
+                    precioOferta: parseFloat(document.getElementById('precioOferta').value),
+                    descuento: parseFloat(document.getElementById('descuento').value),
+                    vigenciaInicio: document.getElementById('fechaInicio').value,  // ✅ vigenciaInicio
+                    vigenciaFin: document.getElementById('fechaFin').value,        // ✅ vigenciaFin
+                    activa: true
+                };
+
+                // Validaciones
+                if (datos.precioOferta >= datos.precioOriginal) {
+                    throw new Error('El precio en oferta debe ser menor al precio anterior');
+                }
+
+                if (new Date(datos.vigenciaFin) <= new Date(datos.vigenciaInicio)) {
+                    throw new Error('La fecha de fin debe ser posterior a la fecha de inicio');
+                }
+
+                console.log('✅ Datos a enviar:', datos);
+
+                const headers = {
+                    'Content-Type': 'application/json'
+                };
+
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
+
+                const response = await fetch(`${API_GATEWAY}/ofertas`, {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify(datos)
+                });
+
+                const resultado = await response.json();
+                console.log('✅ Respuesta del servidor:', resultado);
+
+                if (resultado.success || response.ok) {
+                    alertContainer.innerHTML = `
+                        <div class="alert alert-success">
+                            ✅ Oferta publicada exitosamente
+                        </div>
+                    `;
+
+                    document.getElementById('formPublicar').reset();
+
+                    setTimeout(() => {
+                        cargarOfertas();
+                        cerrarModalPublicar();
+                    }, 2000);
+                } else {
+                    throw new Error(resultado.mensaje || resultado.error || 'Error al publicar oferta');
+                }
+            } catch (error) {
+                console.error('❌ Error completo:', error);
+                alertContainer.innerHTML = `
+                    <div class="alert alert-error">
+                        ❌ ${error.message}
+                    </div>
+                `;
+            } finally {
+                btnSubmit.disabled = false;
+                btnSubmit.textContent = 'Publicar Oferta';
+            }
         });
 
         async function cargarOfertas() {
             try {
-                const response = await fetch(`${API_BASE_URL}/ofertas`);
+                const response = await fetch(`${API_GATEWAY}/ofertas`);
                 const resultado = await response.json();
 
-                if (resultado.success) {
+                if (resultado.success && resultado.data) {
                     const ofertas = resultado.data;
                     mostrarTiendas(ofertas);
                     mostrarOfertas(ofertas);
                 }
             } catch (error) {
-                console.error('Error:', error);
+                console.error('Error cargando ofertas:', error);
                 document.getElementById('storeGrid').innerHTML = '<div class="loading">Error al cargar datos</div>';
                 document.getElementById('offersSection').innerHTML = '<div class="loading">Error al cargar promociones</div>';
             }
@@ -354,6 +733,11 @@
 
             storeGrid.innerHTML = '';
 
+            if (Object.keys(tiendas).length === 0) {
+                storeGrid.innerHTML = '<div class="loading">No hay tiendas registradas</div>';
+                return;
+            }
+
             Object.entries(tiendas).forEach(([nombre, cantidad]) => {
                 const icono = obtenerIconoTienda(nombre);
                 const card = document.createElement('div');
@@ -371,6 +755,11 @@
             const offersSection = document.getElementById('offersSection');
             offersSection.innerHTML = '';
 
+            if (ofertas.length === 0) {
+                offersSection.innerHTML = '<div class="loading">No hay promociones disponibles</div>';
+                return;
+            }
+
             const colores = [
                 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
@@ -379,32 +768,45 @@
                 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
             ];
 
-            ofertas.slice(0, 5).forEach((oferta, index) => {
+            ofertas.slice(0, 8).forEach((oferta, index) => {
                 const icono = obtenerIconoProducto(oferta.producto);
                 const item = document.createElement('div');
                 item.className = 'offer-item';
+                
+                // Usar vigenciaFin o fechaFin dependiendo de lo que venga
+                const fechaFin = oferta.vigenciaFin || oferta.fechaFin;
+                
                 item.innerHTML = `
                     <div class="offer-icon" style="background: ${colores[index % colores.length]};">${icono}</div>
                     <div class="offer-info">
                         <div class="offer-name">${oferta.producto}</div>
                         <div class="offer-discount">${oferta.descuento}% de descuento - $${parseFloat(oferta.precioOferta).toFixed(2)}</div>
-                        <div class="offer-store">${oferta.supermercado}</div>
+                        <div class="offer-store">${oferta.supermercado}${fechaFin ? ' • Válido hasta ' + formatearFecha(fechaFin) : ''}</div>
                     </div>
                 `;
                 offersSection.appendChild(item);
             });
         }
 
+        function formatearFecha(fecha) {
+            const date = new Date(fecha);
+            return date.toLocaleDateString('es-MX', { 
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric'
+            });
+        }
+
         function obtenerIconoTienda(nombre) {
             const iconos = {
-                'Walmart': '🏪',
+                'Walmart': '🪙',
                 'Soriana': '🛒',
-                'Chedraui': '🏬',
+                'Chedraui': '🬬',
                 'La Comer': '🛍️',
-                'Bodega Aurrera': '🏪',
+                'Bodega Aurrera': '🪙',
                 'HEB': '🛒'
             };
-            return iconos[nombre] || '🏪';
+            return iconos[nombre] || '🪙';
         }
 
         function obtenerIconoProducto(nombreProducto) {

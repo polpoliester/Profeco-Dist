@@ -29,7 +29,7 @@ async function iniciar() {
     console.log('Quejas iniciado sin RabbitMQ (modo local)');
   }
 
-  app.listen(4004, () => {
+  app.listen(4005, () => {
     console.log('Servidor de Quejas en puerto 4004');
     console.log('GET  /health');
     console.log('GET  /api/quejas');

@@ -48,9 +48,10 @@ async function connectRabbitMQ() {
     await channel.assertQueue(RABBITMQ_CONFIG.queues.ofertas, { durable: true });
     await channel.assertQueue(RABBITMQ_CONFIG.queues.quejas, { durable: true });
     await channel.assertQueue(RABBITMQ_CONFIG.queues.reportes, { durable: true });
+    await channel.assertQueue('resenas_queue', { durable: true });
     
     console.log('API Gateway conectado a RabbitMQ');
-    console.log('Colas verificadas:', Object.values(RABBITMQ_CONFIG.queues).join(', '));
+    console.log('Colas verificadas:', Object.values(RABBITMQ_CONFIG.queues).join(', '), 'resenas_queue');
     return true;
   } catch (error) {
     console.error('Error conectando a RabbitMQ:', error.message);
@@ -431,6 +432,130 @@ app.put('/api/reportes/:id/estado', authenticateToken, authorize('profeco'), asy
   }
 });
 
+// Rutas de Resenas
+app.get('/api/resenas', authenticateToken, async (req, res) => {
+  try {
+    const respuesta = await enviarMensajeRPC('resenas_queue', {
+      operacion: 'obtener_resenas',
+      filtros: {
+        usuarioId: req.query.usuarioId ? parseInt(req.query.usuarioId) : undefined,
+        supermercadoId: req.query.supermercadoId ? parseInt(req.query.supermercadoId) : undefined,
+        supermercado: req.query.supermercado,
+        calificacion: req.query.calificacion ? parseInt(req.query.calificacion) : undefined
+      },
+      usuario: req.user
+    });
+
+    res.json(respuesta);
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({
+      success: false,
+      mensaje: 'Error comunicandose con el microservicio',
+      error: error.message
+    });
+  }
+});
+
+app.get('/api/resenas/estadisticas', authenticateToken, async (req, res) => {
+  try {
+    const respuesta = await enviarMensajeRPC('resenas_queue', {
+      operacion: 'obtener_estadisticas',
+      supermercadoId: req.query.supermercadoId ? parseInt(req.query.supermercadoId) : undefined,
+      usuario: req.user
+    });
+
+    res.json(respuesta);
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({
+      success: false,
+      mensaje: 'Error comunicandose con el microservicio',
+      error: error.message
+    });
+  }
+});
+
+app.get('/api/resenas/:id', authenticateToken, async (req, res) => {
+  try {
+    const respuesta = await enviarMensajeRPC('resenas_queue', {
+      operacion: 'obtener_resena',
+      id: parseInt(req.params.id),
+      usuario: req.user
+    });
+
+    res.status(respuesta.success ? 200 : 404).json(respuesta);
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({
+      success: false,
+      mensaje: 'Error comunicandose con el microservicio',
+      error: error.message
+    });
+  }
+});
+
+app.post('/api/resenas', authenticateToken, async (req, res) => {
+  try {
+    const respuesta = await enviarMensajeRPC('resenas_queue', {
+      operacion: 'crear_resena',
+      datos: {
+        ...req.body,
+        usuarioId: req.user.id
+      },
+      usuario: req.user
+    });
+
+    res.status(respuesta.success ? 201 : 400).json(respuesta);
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({
+      success: false,
+      mensaje: 'Error comunicandose con el microservicio',
+      error: error.message
+    });
+  }
+});
+
+app.put('/api/resenas/:id', authenticateToken, async (req, res) => {
+  try {
+    const respuesta = await enviarMensajeRPC('resenas_queue', {
+      operacion: 'actualizar_resena',
+      id: parseInt(req.params.id),
+      datos: req.body,
+      usuario: req.user
+    });
+
+    res.status(respuesta.success ? 200 : 404).json(respuesta);
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({
+      success: false,
+      mensaje: 'Error comunicandose con el microservicio',
+      error: error.message
+    });
+  }
+});
+
+app.delete('/api/resenas/:id', authenticateToken, async (req, res) => {
+  try {
+    const respuesta = await enviarMensajeRPC('resenas_queue', {
+      operacion: 'eliminar_resena',
+      id: parseInt(req.params.id),
+      usuario: req.user
+    });
+
+    res.status(respuesta.success ? 200 : 404).json(respuesta);
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({
+      success: false,
+      mensaje: 'Error comunicandose con el microservicio',
+      error: error.message
+    });
+  }
+});
+
 app.get('/health', (req, res) => {
   res.json({
     status: 'OK',
@@ -459,14 +584,22 @@ app.get('/', (req, res) => {
         'POST /api/quejas': 'Crear queja (consumidor)',
         'GET /api/quejas/:id': 'Obtener queja por ID',
         'PUT /api/quejas/:id/estado': 'Actualizar estado de queja (profeco)',
-        'GET /api/quejas/estadisticas': 'Estadísticas de quejas (profeco)'
+        'GET /api/quejas/estadisticas': 'Estadisticas de quejas (profeco)'
       },
       reportes: {
         'GET /api/reportes': 'Obtener reportes de precios (requiere autenticacion)',
         'POST /api/reportes': 'Crear reporte de precio (consumidor)',
         'GET /api/reportes/:id': 'Obtener reporte por ID',
         'PUT /api/reportes/:id/estado': 'Gestionar estado de reporte (profeco)',
-        'GET /api/reportes/estadisticas': 'Estadísticas de reportes (profeco)'
+        'GET /api/reportes/estadisticas': 'Estadisticas de reportes (profeco)'
+      },
+      resenas: {
+        'GET /api/resenas': 'Obtener resenas (requiere autenticacion)',
+        'POST /api/resenas': 'Crear resena (consumidor)',
+        'GET /api/resenas/:id': 'Obtener resena por ID',
+        'PUT /api/resenas/:id': 'Actualizar resena',
+        'DELETE /api/resenas/:id': 'Eliminar resena',
+        'GET /api/resenas/estadisticas': 'Estadisticas de resenas'
       }
     },
     usuariosPrueba: [
@@ -496,6 +629,9 @@ async function iniciar() {
     console.log('   GET    /api/reportes');
     console.log('   POST   /api/reportes');
     console.log('   PUT    /api/reportes/:id/estado (profeco)');
+    console.log('   GET    /api/resenas');
+    console.log('   POST   /api/resenas');
+    console.log('   GET    /api/resenas/estadisticas');
   });
 }
 
