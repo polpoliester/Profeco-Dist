@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>PROFECO - Reseñas</title>
+    <link rel="stylesheet" href="styles-profeco.css" />
+    <script defer src="./js/reviews.js"></script>
+    <style>
+        .list {
+            list-style: none;
+            padding: 0;
+            margin: 0
+        }
+
+        .list li {
+            padding: 10px 0;
+            border-bottom: 1px solid #eee
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <div class="header-left"><button class="back-btn" onclick="location.href='catalogo.html'">←</button>
+            <h1>Reseñas de supermercados</h1>
+        </div>
+        <div class="user-info"><button class="logout-btn"
+                onclick="localStorage.clear();location.href='index.html'">Cerrar sesión</button></div>
+    </div>
+    <main class="content">
+        <div class="card">
+            <h2 class="card-title">Nueva reseña</h2>
+            <form id="review-form" class="form">
+                <div class="form-group"><label>Supermercado</label><select id="market-select" required></select></div>
+                <div class="form-group"><label>Calificación</label>
+                    <select id="rating" required>
+                        <option value="">Selecciona…</option>
+                        <option>1</option>
+                        <option>2</option>
+                        <option>3</option>
+                        <option>4</option>
+                        <option>5</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Comentario</label><textarea id="comment" rows="3"
+                        placeholder="¿Qué te pareció?"></textarea></div>
+                <button class="btn btn-primary" type="submit">Enviar</button>
+            </form>
+        </div>
+        <div class="card">
+            <h2 class="card-title">Últimas reseñas</h2>
+            <ul id="reviews-list" class="list"></ul>
+        </div>
+    </main>
+</body>
+
+</html>

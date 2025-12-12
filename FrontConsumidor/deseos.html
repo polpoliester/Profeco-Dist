@@ -1,0 +1,123 @@
+<!-- ===== PATCH 2: FrontConsumidor/deseos.html – versión sin cantidad ===== -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>PROFECO - Lista de deseos</title>
+  <link rel="stylesheet" href="styles-profeco.css?v=109"/>
+  <style>
+    .wrap{max-width:1100px;margin:24px auto;padding:24px;background:#fff;border-radius:12px;box-shadow:0 2px 14px rgba(0,0,0,.08)}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:14px;border-bottom:1px solid #eee;text-align:left}
+    th{background:#f9f9f9}
+    .btn{border:none;border-radius:8px;padding:10px 14px;cursor:pointer}
+    .btn.save{background:#64748b;color:#fff}
+    .btn.del{background:#ef4444;color:#fff}
+    .btn.ghost{background:#8B1538;color:#fff}
+    .actions{display:flex;gap:10px}
+    .header{background:#8B1538;color:#fff;padding:16px}
+    .back{background:none;border:none;color:#fff;font-size:20px;margin-right:12px;cursor:pointer}
+    input[type="text"]{border:1px solid #ddd;border-radius:6px;padding:8px 10px;width:100%}
+  </style>
+</head>
+<body>
+  <div class="header">
+    <button class="back" onclick="location.href='catalogo.html'">←</button>
+    <strong>Lista de deseos</strong>
+  </div>
+
+  <div class="wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Producto</th>
+          <th>Supermercado</th>
+          <th>Precio</th>
+          <th>Notas</th>
+          <th style="width:220px">Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+
+    <div style="margin-top:18px;display:flex;gap:12px">
+      <button class="btn del" onclick="clearAll()">Vaciar lista</button>
+      <button class="btn ghost" onclick="exportJSON()">Exportar JSON</button>
+    </div>
+  </div>
+
+  <script>
+    const KEY='wishlist';
+    const get=()=>{ try{ return JSON.parse(localStorage.getItem(KEY)||'[]'); }catch{ return []; } };
+    const set=v=>localStorage.setItem(KEY, JSON.stringify(v));
+
+    // Migración 1x: elimina campo cantidad si existe
+    (function migrate(){
+      const list=get();
+      let changed=false;
+      for(const item of list){
+        if ('cantidad' in item){ delete item.cantidad; changed=true; }
+      }
+      if (changed) set(list);
+    })();
+
+    function render(){
+      const tb=document.getElementById('rows');
+      const list=get();
+      tb.innerHTML='';
+      if(list.length===0){
+        tb.innerHTML=`<tr><td colspan="5" style="text-align:center;color:#888;padding:24px">
+          Tu lista está vacía. Agrega desde el catálogo.
+        </td></tr>`;
+        return;
+      }
+      for(const it of list){
+        const tr=document.createElement('tr');
+        tr.innerHTML=`
+          <td>${it.nombre}</td>
+          <td>${it.supermercado}</td>
+          <td>$${Number(it.precio||0).toFixed(2)}</td>
+          <td><input type="text" value="${it.notas||''}" data-id="${it.id}" class="nota"/></td>
+          <td class="actions">
+            <button class="btn save" data-act="save" data-id="${it.id}">Guardar</button>
+            <button class="btn del" data-act="del" data-id="${it.id}">Eliminar</button>
+          </td>`;
+        tb.appendChild(tr);
+      }
+    }
+
+    document.getElementById('rows').addEventListener('click',(e)=>{
+      const a=e.target.dataset.act; if(!a) return;
+      const id=e.target.dataset.id;
+      if(a==='del'){ removeItem(id); }
+      if(a==='save'){
+        const nota = document.querySelector(`input.nota[data-id="${id}"]`)?.value || '';
+        saveNote(id, nota);
+      }
+    });
+
+    function removeItem(id){
+      set(get().filter(x=>x.id!==id));
+      render();
+    }
+    function saveNote(id, notas){
+      const list=get();
+      const it = list.find(x=>x.id===id);
+      if(!it) return;
+      it.notas = notas;
+      set(list);
+    }
+    function clearAll(){
+      if(confirm('¿Vaciar la lista por completo?')){ localStorage.removeItem(KEY); render(); }
+    }
+    function exportJSON(){
+      const blob=new Blob([JSON.stringify(get(),null,2)],{type:'application/json'});
+      const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='wishlist.json'; a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    render();
+  </script>
+</body>
+</html>
