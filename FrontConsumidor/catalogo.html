@@ -240,6 +240,9 @@ File: FrontConsumidor/catalogo.html  (build v108)
             <a href="deseos.html" class="pill">❤️ Mis deseos</a>
             <span id="user-name"></span>
             <button class="logout-btn" onclick="logout()">Cerrar sesión</button>
+			<button class="logout-btn" onclick="abrirNotificaciones()" style="background: none; font-size: 1.2rem; margin-right: 10px;">
+            🔔 <span id="notif-count" style="background: #ef4444; color: white; border-radius: 50%; padding: 2px 6px; font-size: 10px; position: relative; top: -10px; left: -10px; display: none;">0</span>
+        </button>
         </div>
     </div>
 
@@ -288,6 +291,62 @@ File: FrontConsumidor/catalogo.html  (build v108)
 
         document.getElementById('searchInput').addEventListener('input', filtrar);
         document.addEventListener('DOMContentLoaded', cargarOfertas);
+
+async function abrirNotificaciones() {
+    modal.classList.add('open');
+    modalBody.innerHTML = '<div class="loading">Cargando notificaciones...</div>';
+
+    try {
+        // 1. Cargar la vista HTML desde la carpeta paralela FrontWishLists
+        const response = await fetch('../FrontWishLists/notificacionesView.html');
+        modalBody.innerHTML = await response.text();
+
+        // 2. Cargar el script modular e inicializarlo (desde la carpeta paralela)
+        // La ruta es relativa a catalogo.html (FrontConsumidor/ -> FrontWishLists/notificaciones.js)
+        const { initNotificaciones } = await import('../FrontWishLists/notificaciones.js');
+        initNotificaciones(usuario.id);
+
+    } catch (e) {
+        console.error("Error al cargar notificaciones:", e);
+        modalBody.innerHTML = `<div class="error" style="background: #fee; padding: 10px; color: #c33;">Error al cargar: ${e.message}</div>`;
+    }
+}
+
+function cerrarNotificaciones() {
+    modal.classList.remove('open');
+    // Al cerrar, actualizamos el contador por si se marcaron como leídas
+    actualizarContadorNotificaciones();
+}
+
+// Función para actualizar el badge de la campana
+async function actualizarContadorNotificaciones() {
+    if (!usuario) return;
+    
+    try {
+      
+        const url = `${API_BASE_URL}/notificaciones?usuarioId=${usuario.id}`; 
+        
+        const response = await fetch(url, {
+             headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        });
+        const res = await response.json();
+        
+        // Asumiendo el formato de respuesta { success: true, data: [...] }
+        if (response.ok && res.data) { 
+            const pendientes = res.data.filter(n => !n.leida).length;
+            const badge = document.getElementById('notif-count');
+            
+            if (pendientes > 0) {
+                badge.textContent = pendientes;
+                badge.style.display = 'inline';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+    } catch (error) {
+        console.warn("No se pudo actualizar el contador de notificaciones:", error);
+    }
+}
 
         async function cargarOfertas() {
             const loading = document.getElementById('loadingContainer');
@@ -418,6 +477,15 @@ File: FrontConsumidor/catalogo.html  (build v108)
                 toast('Añadido a tu lista de deseos');
             };
         })();
+		
+		<div id="notifModal" class="modal-overlay">
+    <div class="modal-content">
+        <button class="modal-close" onclick="cerrarNotificaciones()">×</button>
+        <div id="modalBody">
+            <h2 style="color: #8B1538; margin-bottom: 10px;">Cargando...</h2>
+        </div>
+    </div>
+</div>
     </script>
 
 </body>
